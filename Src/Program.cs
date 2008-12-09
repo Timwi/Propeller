@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using RT.Servers;
 using System.IO;
-using RT.Util.XMLClassify;
+using RT.Util.XmlClassify;
 using RT.Util;
 using System.Threading;
 using System.Reflection;
@@ -58,12 +58,12 @@ namespace Propeller
             PropellerConfig cfg;
             try
             {
-                cfg = XMLClassify.ReadObjectFromXMLFile<PropellerConfig>(Path.Combine(PathUtil.AppPath, @"Propeller.config.xml"));
+                cfg = XmlClassify.LoadObjectFromXmlFile<PropellerConfig>(Path.Combine(PathUtil.AppPath, @"Propeller.config.xml"));
             }
             catch
             {
                 cfg = new PropellerConfig();
-                XMLClassify.SaveObjectAsXML(cfg, Path.Combine(PathUtil.AppPath, @"Propeller.config.xml"));
+                XmlClassify.SaveObjectToXmlFile(cfg, Path.Combine(PathUtil.AppPath, @"Propeller.config.xml"));
             }
 
             Listener = new TcpListener(IPAddress.Any, cfg.ServerOptions.Port);
