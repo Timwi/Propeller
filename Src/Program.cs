@@ -17,7 +17,7 @@ namespace Propeller
 {
     public class PropellerConfig
     {
-        public HTTPServerOptions ServerOptions = new HTTPServerOptions();
+        public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = Path.Combine(PathUtil.AppPath, "plugins");
     }
 
