@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using RT.Servers;
 using System.IO;
-using RT.Util.XmlClassify;
 using RT.Util;
 using System.Threading;
 using System.Reflection;
@@ -12,6 +11,7 @@ using RT.Util.Collections;
 using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
+using RT.Util.Xml;
 
 namespace Propeller
 {
@@ -21,7 +21,7 @@ namespace Propeller
         public string PluginDirectory = Path.Combine(PathUtil.AppPath, "plugins");
     }
 
-    class Program
+    public class Program
     {
         static AppDomain ActiveAPIDomain = null;
         static PropellerAPI ActiveAPI = null;
