@@ -120,7 +120,7 @@ namespace Propeller
                             ShadowCopyDirectories = cfg.PluginDirectory
                         });
                         ActiveAPI = (PropellerAPI) ActiveAPIDomain.CreateInstanceAndUnwrap("PropellerAPI", "Propeller.PropellerAPI");
-                        ActiveAPI.Init(cfg.ServerOptions, plugins, log);
+                        ActiveAPI.Init(cfg.ServerOptions, plugins, log, cfg.PluginConfigs);
                     }
                 }
 
