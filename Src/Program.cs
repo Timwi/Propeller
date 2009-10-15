@@ -1,4 +1,5 @@
 ﻿using System;
+using RT.Util.ExtensionMethods;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,7 @@ namespace Propeller
     {
         public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = Path.Combine(PathUtil.AppPath, "plugins");
+        public Dictionary<string, string> PluginConfigs = new Dictionary<string, string>();
     }
 
     public class Program
@@ -62,10 +64,13 @@ namespace Propeller
             }
             catch
             {
+                var path = Path.Combine(PathUtil.AppPath, @"Propeller.config.xml");
+                log.Warn("Config file could not be loaded; creating default config at: {0}".Fmt(path));
                 cfg = new PropellerConfig();
-                XmlClassify.SaveObjectToXmlFile(cfg, Path.Combine(PathUtil.AppPath, @"Propeller.config.xml"));
+                XmlClassify.SaveObjectToXmlFile(cfg, path);
             }
 
+            log.Warn("Starting to listen on port: {0}".Fmt(cfg.ServerOptions.Port));
             Listener = new TcpListener(IPAddress.Any, cfg.ServerOptions.Port);
             new Thread(ListeningThreadFunction).Start();
 
@@ -75,14 +80,13 @@ namespace Propeller
             {
                 var plugins = new List<FileInfo>();
 
-                foreach (var fi in new DirectoryInfo(cfg.PluginDirectory).GetFiles().Where(f => f.Extension == ".dll"))
+                foreach (var fi in new DirectoryInfo(cfg.PluginDirectory).GetFiles("*.dll"))
                 {
-                    if (!File.Exists(fi.FullName))
-                        continue;
                     if (!fileChangeTime.ContainsKey(fi.FullName) || fileChangeTime[fi.FullName] < fi.LastWriteTimeUtc)
                     {
                         mustReinitServer = true;
                         fileChangeTime[fi.FullName] = fi.LastWriteTimeUtc;
+                        log.Info("Plugin changed: " + fi.FullName);
                     }
                     plugins.Add(fi);
                 }
@@ -92,13 +96,17 @@ namespace Propeller
                     {
                         fileChangeTime.Remove(fi);
                         mustReinitServer = true;
+                        log.Info("Plugin removed: " + fi);
                     }
                 }
+#warning TODO: Check if the server config file or any of the plugin config files have changed
 
                 if (mustReinitServer)
                 {
                     lock (LockObject)
                     {
+                        log.Info("Reinitialising plugins...");
+
                         if (ActiveAPIDomain != null)
                             inactiveDomains.Add(new Tuple<AppDomain, PropellerAPI>(ActiveAPIDomain, ActiveAPI));
 
@@ -126,7 +134,12 @@ namespace Propeller
                 }
                 inactiveDomains = newInactiveDomains;
 
+#if DEBUG
+                Thread.Sleep(1000);
+#else
                 Thread.Sleep(10000);
+#endif
+
                 mustReinitServer = false;
             }
         }

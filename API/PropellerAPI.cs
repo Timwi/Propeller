@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RT.Servers;
+using RT.Util.ExtensionMethods;
 using System.IO;
 using System.Reflection;
 using RT.Util;
@@ -11,19 +12,21 @@ using System.Net.Sockets;
 
 namespace Propeller
 {
-    [global::System.AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
-    public sealed class PropellerModuleAttribute : Attribute { }
+    public interface IPropellerModule
+    {
+        IEnumerable<HttpRequestHandlerHook> Init(string configFilePath);
+    }
 
     [Serializable]
     public class PropellerAPI : MarshalByRefObject
     {
-        private HttpServer Server;
+        private HttpServer _server;
 
-        public void Init(HttpServerOptions Options, IEnumerable<FileInfo> DLLFiles, LoggerBase Log)
+        public void Init(HttpServerOptions options, IEnumerable<FileInfo> dllFiles, LoggerBase log, Dictionary<string, string> configFilePaths)
         {
-            Server = new HttpServer(Options);
+            _server = new HttpServer(options);
 
-            foreach (FileInfo f in DLLFiles)
+            foreach (FileInfo f in dllFiles)
             {
                 if (!File.Exists(f.FullName))
                     continue;
@@ -31,19 +34,21 @@ namespace Propeller
                 Assembly a = Assembly.Load(filename);
                 foreach (var tp in a.GetExportedTypes())
                 {
-                    if (!tp.GetCustomAttributes(typeof(PropellerModuleAttribute), true).Any())
+                    if (!typeof(IPropellerModule).IsAssignableFrom(tp))
                         continue;
-                    var sm = tp.GetMethod("Init", new Type[] { });
-                    if (sm == null || !sm.IsStatic || sm.ReturnType != typeof(IEnumerable<HttpRequestHandlerHook>))
+                    IPropellerModule module;
+                    try
                     {
-                        Log.Log(1, LogType.Warning,
-                            "The module {0} has a type {1} that uses the [PropellerModule] attribute, but it does not have a static Init() method with no parameters that returns a {2}, so it is ignored.",
-                            f, tp, typeof(HttpRequestHandlerHook[]).FullName);
+                        module = (IPropellerModule) Activator.CreateInstance(tp);
+                    }
+                    catch (Exception e)
+                    {
+                        log.Error("Error initialising module {0}: {1}", tp.FullName, e.Message);
                         continue;
                     }
-
-                    foreach (var ThisHandler in (IEnumerable<HttpRequestHandlerHook>) sm.Invoke(null, new object[] { }))
-                        Server.RequestHandlerHooks.Add(ThisHandler);
+                    var configPath = configFilePaths.ContainsKey(tp.FullName) ? configFilePaths[tp.FullName] : PathUtil.AppPathCombine(Path.GetFileNameWithoutExtension(f.Name) + ".config.xml");
+                    foreach (var handler in module.Init(configPath))
+                        _server.RequestHandlerHooks.Add(handler);
                 }
             }
         }
@@ -51,12 +56,12 @@ namespace Propeller
         public void HandleRequest(SocketInformation sckInfo)
         {
             Socket sck = new Socket(sckInfo);
-            Server.HandleRequest(sck, false);
+            _server.HandleRequest(sck, false);
         }
 
         public int ActiveHandlers()
         {
-            return Server.ActiveHandlers;
+            return _server.ActiveHandlers;
         }
     }
 }
