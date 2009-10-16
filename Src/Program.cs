@@ -177,6 +177,14 @@ namespace Propeller
                     mustReinitServer = true;
                 }
 
+                // Check if any of the files in the folders to be monitored have been deleted
+                foreach (var file in checkFoldersFilesFound.Keys.Where(f => !File.Exists(f)).Take(1))
+                {
+                    lock (Log)
+                        Log.Info("File got deleted: " + file);
+                    mustReinitServer = true;
+                }
+
                 if (mustReinitServer)
                 {
                     lock (Log)
