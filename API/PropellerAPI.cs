@@ -14,24 +14,42 @@ namespace Propeller
 {
     public interface IPropellerModule
     {
-        IEnumerable<HttpRequestHandlerHook> Init(string configFilePath);
+        PropellerModuleInitResult Init(string configFilePath, LoggerBase log);
+        void Shutdown();
+    }
+
+    public class PropellerModuleInitResult : MarshalByRefObject
+    {
+        public IEnumerable<HttpRequestHandlerHook> HandlerHooks;
+        public IEnumerable<string> FilesToMonitor;
+        public IEnumerable<string> FoldersToMonitor;
+    }
+
+    [Serializable]
+    public class PropellerInternalInitResult
+    {
+        public string[] FilesToMonitor;
+        public string[] FoldersToMonitor;
     }
 
     [Serializable]
     public class PropellerAPI : MarshalByRefObject
     {
         private HttpServer _server;
+        private List<IPropellerModule> _modules;
 
-        public void Init(HttpServerOptions options, IEnumerable<FileInfo> dllFiles, LoggerBase log, Dictionary<string, string> configFilePaths)
+        public PropellerInternalInitResult Init(HttpServerOptions options, IEnumerable<FileInfo> dllFiles, LoggerBase log, Dictionary<string, string> configFilePaths)
         {
             _server = new HttpServer(options);
+            _modules = new List<IPropellerModule>();
+            var filesToMon = Enumerable.Empty<string>();
+            var foldersToMon = Enumerable.Empty<string>();
 
             foreach (FileInfo f in dllFiles)
             {
                 if (!File.Exists(f.FullName))
                     continue;
-                string filename = Path.GetFileNameWithoutExtension(f.FullName);
-                Assembly a = Assembly.Load(filename);
+                Assembly a = Assembly.LoadFile(f.FullName);
                 foreach (var tp in a.GetExportedTypes())
                 {
                     if (!typeof(IPropellerModule).IsAssignableFrom(tp))
@@ -40,17 +58,35 @@ namespace Propeller
                     try
                     {
                         module = (IPropellerModule) Activator.CreateInstance(tp);
+                        var configPath = configFilePaths.ContainsKey(tp.FullName) ? configFilePaths[tp.FullName] : Path.Combine(f.DirectoryName, Path.GetFileNameWithoutExtension(f.Name) + ".config.xml");
+                        var result = module.Init(configPath, log);
+                        if (result.HandlerHooks != null)
+                            foreach (var handler in result.HandlerHooks)
+                                _server.RequestHandlerHooks.Add(handler);
+                        if (result.FilesToMonitor != null)
+                            filesToMon = filesToMon.Concat(result.FilesToMonitor);
+                        if (result.FoldersToMonitor != null)
+                            foldersToMon = foldersToMon.Concat(result.FoldersToMonitor);
+                        _modules.Add(module);
                     }
                     catch (Exception e)
                     {
                         log.Error("Error initialising module {0}: {1}", tp.FullName, e.Message);
                         continue;
                     }
-                    var configPath = configFilePaths.ContainsKey(tp.FullName) ? configFilePaths[tp.FullName] : PathUtil.AppPathCombine(Path.GetFileNameWithoutExtension(f.Name) + ".config.xml");
-                    foreach (var handler in module.Init(configPath))
-                        _server.RequestHandlerHooks.Add(handler);
                 }
             }
+            return new PropellerInternalInitResult
+            {
+                FilesToMonitor = filesToMon.ToArray(),
+                FoldersToMonitor = foldersToMon.ToArray()
+            };
+        }
+
+        public void Shutdown()
+        {
+            foreach (var module in _modules)
+                module.Shutdown();
         }
 
         public void HandleRequest(SocketInformation sckInfo)
