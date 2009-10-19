@@ -64,11 +64,31 @@ namespace Propeller.Modules
                 lock (log)
                     log.Warn("Warning: The folder {0} specified in the configuration file {1} does not exist.".Fmt(invalid, configFilePath));
 
-            _doc = new DocumentationGenerator(_settings.Paths.Where(d => Directory.Exists(d)).ToArray());
+            // Try to clean up old folders we've created before
+            var tempPath = Path.GetTempPath();
+            foreach (var pth in Directory.GetDirectories(tempPath, "docgen-tmp-*"))
+            {
+                foreach (var file in Directory.GetFiles(pth))
+                    try { File.Delete(file); }
+                    catch { }
+                try { Directory.Delete(pth); }
+                catch { }
+            }
+
+            // Find a new folder to put the DLL files into
+            int j = 1;
+            var copyToPath = Path.Combine(tempPath, "docgen-tmp-" + j);
+            while (Directory.Exists(copyToPath))
+            {
+                j++;
+                copyToPath = Path.Combine(tempPath, "docgen-tmp-" + j);
+            }
+            Directory.CreateDirectory(copyToPath);
+
+            _doc = new DocumentationGenerator(_settings.Paths.Where(d => Directory.Exists(d)).ToArray(), copyToPath);
             log.Info("DocGen initialised successfully.");
             return new PropellerModuleInitResult
             {
-                FilesToMonitor = _doc.ProcessedFiles.Concat(configFilePath),
                 FoldersToMonitor = _settings.Paths,
                 HandlerHooks = new HttpRequestHandlerHook[] { new HttpRequestHandlerHook(_settings.Url, _doc.GetRequestHandler()) }
             };
