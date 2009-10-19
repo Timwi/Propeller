@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Servers", "..\RT.Servers\Sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.SharpZLib", "Lib\SharpZipLib\ICSharpCode.SharpZLib.csproj", "{0E7413FF-EB9E-4714-ACF2-BE3A6A7B2FFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropellerAPI", "API\PropellerAPI.csproj", "{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropellerApi", "API\PropellerApi.csproj", "{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocumentationGenerator", "Src\DocumentationGenerator\DocumentationGenerator.csproj", "{0D929F3C-D064-4266-8F35-907FA7650D2D}"
 EndProject

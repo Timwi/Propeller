@@ -1,33 +1,30 @@
 ﻿using System;
-using RT.Util.ExtensionMethods;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using RT.Servers;
-using System.IO;
-using RT.Util;
-using System.Threading;
-using System.Reflection;
-using RT.Util.Collections;
-using System.Net.Sockets;
-using System.Net;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using RT.Servers;
+using RT.Util;
+using RT.Util.Collections;
+using RT.Util.ExtensionMethods;
 using RT.Util.Xml;
 
 namespace Propeller
 {
+    [Serializable]
     public class PropellerConfig
     {
         public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = Path.Combine(PathUtil.AppPath, "plugins");
-        public Dictionary<string, string> PluginConfigs = new Dictionary<string, string>();
     }
 
     public class Program
     {
-        static AppDomain ActiveAPIDomain = null;
-        static PropellerAPI ActiveAPI = null;
-        static int APICount = 0;
+        static PropellerApi ActiveApi = null;
+        static int ApiCount = 0;
         static object LockObject = new object();
         static LoggerBase Log;
 
@@ -46,8 +43,9 @@ namespace Propeller
                     {
                         try
                         {
-                            if (ActiveAPI != null)
-                                ActiveAPI.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id));
+                            if (ActiveApi != null)
+                                // This creates a new thread for handling the connection and returns pretty immediately.
+                                ActiveApi.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id));
                             else
                                 sck.Close();
                         }
@@ -66,44 +64,43 @@ namespace Propeller
         static void Main(string[] args)
         {
             Log = new ConsoleLogger { TimestampInUTC = true };
-            var inactiveDomains = new List<Tuple<AppDomain, PropellerAPI>>();
-            var fileChangeTime = new Dictionary<string, DateTime>();
-            var checkFolders = new List<string>();
-            var checkFoldersFilesFound = new Dictionary<string, bool>();
+            var inactiveDomains = new List<Tuple<AppDomain, PropellerApi>>();
             var configPath = Path.Combine(PathUtil.AppPath, @"Propeller.config.xml");
+            DateTime configFileChangeTime = DateTime.MinValue;
             Thread currentListeningThread = null;
-            int currentPort = -1;
             var mustReinitServer = false;
             PropellerConfig currentConfig = null;
+            bool first = true;
+            Tuple<string, DateTime>[] listOfPlugins = null;
+            AppDomain activeApiDomain = null;
 
             while (true)
             {
-                var cfgFi = new FileInfo(configPath);
-                if (!File.Exists(configPath) || !fileChangeTime.ContainsKey(cfgFi.FullName) || fileChangeTime[cfgFi.FullName] < cfgFi.LastWriteTimeUtc)
+                if (first || !File.Exists(configPath) || currentConfig == null || configFileChangeTime < new FileInfo(configPath).LastWriteTimeUtc)
                 {
+                    // Read configuration file
                     mustReinitServer = true;
-                    fileChangeTime[cfgFi.FullName] = cfgFi.LastWriteTimeUtc;
+                    configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
                     lock (Log)
-                        Log.Info("Reloading config file: " + configPath);
-                    PropellerConfig cfg;
+                        Log.Info((first ? "Loading config file: " : "Reloading config file: ") + configPath);
+                    PropellerConfig newConfig;
                     try
                     {
-                        cfg = XmlClassify.LoadObjectFromXmlFile<PropellerConfig>(configPath);
+                        newConfig = XmlClassify.LoadObjectFromXmlFile<PropellerConfig>(configPath);
                     }
                     catch
                     {
                         lock (Log)
                             Log.Warn("Config file could not be loaded; using default config.");
-                        cfg = new PropellerConfig();
+                        newConfig = new PropellerConfig();
                         if (!File.Exists(configPath))
                         {
                             try
                             {
-                                XmlClassify.SaveObjectToXmlFile(cfg, configPath);
+                                XmlClassify.SaveObjectToXmlFile(newConfig, configPath);
                                 lock (Log)
                                     Log.Info("Default config saved to {0}.".Fmt(configPath));
-                                var fi = new FileInfo(configPath);
-                                fileChangeTime[fi.FullName] = fi.LastWriteTimeUtc;
+                                configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
                             }
                             catch (Exception e)
                             {
@@ -112,18 +109,22 @@ namespace Propeller
                             }
                         }
                     }
-                    if (cfg.ServerOptions.Port != currentPort)
+
+                    // If port number is different from previous port number, create a new listening thread and kill the old one
+                    if (first || currentConfig == null || (newConfig.ServerOptions.Port != currentConfig.ServerOptions.Port))
                     {
+                        if (!first)
+                            lock (Log)
+                                Log.Info("Switching from port {0} to port {1}.".Fmt(currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
                         if (currentListeningThread != null)
                             currentListeningThread.Abort();
-                        int port = currentPort = cfg.ServerOptions.Port;
+                        int port = newConfig.ServerOptions.Port;
                         currentListeningThread = new Thread(() => ListeningThreadFunction(port));
                         currentListeningThread.Start();
                     }
-                    currentConfig = cfg;
-                }
 
-                var plugins = new List<FileInfo>();
+                    currentConfig = newConfig;
+                }
 
                 if (!Directory.Exists(currentConfig.PluginDirectory))
                     try { Directory.CreateDirectory(currentConfig.PluginDirectory); }
@@ -132,113 +133,99 @@ namespace Propeller
                         lock (Log)
                         {
                             Log.Error(e.Message);
-                            Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again.");
+                            Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.");
                         }
                         return;
                     }
 
-                foreach (var fi in new DirectoryInfo(currentConfig.PluginDirectory).GetFiles("*.dll"))
+                // Detect if any DLL file has been added, deleted, renamed, or its date/time has changed
+                var newListOfPlugins = new DirectoryInfo(currentConfig.PluginDirectory).GetFiles("*.dll").OrderBy(fi => fi.FullName).Select(fi => new Tuple<string, DateTime>(fi.FullName, fi.LastWriteTimeUtc)).ToArray();
+                if (listOfPlugins == null || !listOfPlugins.SequenceEqual(newListOfPlugins))
                 {
-                    if (!fileChangeTime.ContainsKey(fi.FullName))
-                    {
-                        mustReinitServer = true;
-                        fileChangeTime[fi.FullName] = fi.LastWriteTimeUtc;
+                    if (listOfPlugins != null)
                         lock (Log)
-                            Log.Info("New plugin detected: " + fi.FullName);
-                    }
-                    plugins.Add(fi);
-                }
-
-                // Check if any of the monitored files have changed or been removed
-                foreach (var key in fileChangeTime.Keys.ToArray())
-                {
-                    FileInfo fi;
-                    if (!File.Exists(key))
-                    {
-                        fileChangeTime.Remove(key);
-                        mustReinitServer = true;
-                        lock (Log)
-                            Log.Info("File removed: " + key);
-                    }
-                    else if (fileChangeTime[key] < (fi = new FileInfo(key)).LastWriteTimeUtc)
-                    {
-                        mustReinitServer = true;
-                        fileChangeTime[key] = fi.LastWriteTimeUtc;
-                        lock (Log)
-                            Log.Info("File changed: " + key);
-                    }
-                }
-
-                // Check if there are any new files in the folders to be monitored
-                foreach (var dir in checkFolders.Where(d => Directory.Exists(d) && Directory.GetFiles(d).Any(f => !checkFoldersFilesFound.ContainsKey(f))).Take(1))
-                {
-                    lock (Log)
-                        Log.Info("New file detected in folder: " + dir);
+                            Log.Info(@"Change in plugin directory detected.");
                     mustReinitServer = true;
+                    listOfPlugins = newListOfPlugins;
                 }
 
-                // Check if any of the files in the folders to be monitored have been deleted
-                foreach (var file in checkFoldersFilesFound.Keys.Where(f => !File.Exists(f)).Take(1))
-                {
-                    lock (Log)
-                        Log.Info("File got deleted: " + file);
-                    mustReinitServer = true;
-                }
+                // Check whether any of the plugins reports that they need to be reinitialised.
+                if (!mustReinitServer && ActiveApi != null)
+                    mustReinitServer = ActiveApi.MustReinitServer();
 
                 if (mustReinitServer)
                 {
                     lock (Log)
-                        Log.Info("Initialising Propeller...");
-                    fileChangeTime = plugins.ToDictionary(fi => fi.FullName, fi => fi.LastWriteTimeUtc);
-                    fileChangeTime[configPath] = new FileInfo(configPath).LastWriteTimeUtc;
-                    checkFolders = new List<string>();
-                    checkFoldersFilesFound = new Dictionary<string, bool>();
+                        Log.Info(first ? "Starting Propeller..." : "Restarting Propeller...");
 
-                    AppDomain newAPIDomain;
-                    PropellerAPI newAPI;
+                    // Try to clean up old folders we've created before
+                    var tempPath = Path.GetTempPath();
+                    foreach (var pth in Directory.GetDirectories(tempPath, "propeller-tmp-*"))
+                    {
+                        foreach (var file in Directory.GetFiles(pth))
+                            try { File.Delete(file); }
+                            catch { }
+                        try { Directory.Delete(pth); }
+                        catch { }
+                    }
 
-                    newAPIDomain = AppDomain.CreateDomain("Propeller API " + (APICount++), null, new AppDomainSetup
+                    // Find a new folder to put the DLL files into
+                    int j = 1;
+                    var copyToPath = Path.Combine(tempPath, "propeller-tmp-" + j);
+                    while (Directory.Exists(copyToPath))
+                    {
+                        j++;
+                        copyToPath = Path.Combine(tempPath, "propeller-tmp-" + j);
+                    }
+                    Directory.CreateDirectory(copyToPath);
+
+                    // Copy the DLLs into the new folder and simultaneously create the list of DllInfo objects for them.
+                    var dlls = new List<DllInfo>();
+                    foreach (var plugin in listOfPlugins)
+                    {
+                        var dll = new DllInfo
+                        {
+                            OrigDllPath = plugin.E1,
+                            TempDllPath = Path.Combine(copyToPath, Path.GetFileName(plugin.E1))
+                        };
+                        try
+                        {
+                            File.Copy(dll.OrigDllPath, dll.TempDllPath);
+                        }
+                        catch (Exception e)
+                        {
+                            lock (Log)
+                                Log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2} - Ignoring plugin.".Fmt(dll.OrigDllPath, dll.TempDllPath, e.Message));
+                            continue;
+                        }
+                        dlls.Add(dll);
+                    }
+
+                    AppDomain newApiDomain = AppDomain.CreateDomain("Propeller API " + (ApiCount++), null, new AppDomainSetup
                     {
                         ApplicationBase = PathUtil.AppPath,
-                        PrivateBinPath = currentConfig.PluginDirectory,
-                        CachePath = Path.Combine(currentConfig.PluginDirectory, "cache"),
-                        ShadowCopyFiles = "true",
-                        ShadowCopyDirectories = currentConfig.PluginDirectory
+                        PrivateBinPath = copyToPath,
                     });
-                    var objRaw = newAPIDomain.CreateInstanceAndUnwrap("PropellerAPI", "Propeller.PropellerAPI");
-                    newAPI = (PropellerAPI) objRaw;
+                    PropellerApi newApi = (PropellerApi) newApiDomain.CreateInstanceAndUnwrap("PropellerApi", "Propeller.PropellerApi");
+
                     lock (Log)
-                    {
-                        var result = newAPI.Init(currentConfig.ServerOptions, plugins, Log, currentConfig.PluginConfigs);
-                        if (result != null)
-                        {
-                            if (result.FilesToMonitor != null)
-                                foreach (var ftm in result.FilesToMonitor.Where(f => File.Exists(f)).Select(f => new FileInfo(f)))
-                                    if (!fileChangeTime.ContainsKey(ftm.FullName))
-                                        fileChangeTime.Add(ftm.FullName, ftm.LastWriteTimeUtc);
-                            if (result.FoldersToMonitor != null)
-                                foreach (var ftm in result.FoldersToMonitor)
-                                {
-                                    checkFolders.Add(ftm);
-                                    if (Directory.Exists(ftm))
-                                        foreach (var ff in new DirectoryInfo(ftm).GetFiles().Select(f => f.FullName))
-                                            checkFoldersFilesFound[ff] = true;
-                                }
-                        }
-                    }
+                        newApi.Init(currentConfig.ServerOptions, dlls, Log);
+
                     lock (LockObject)
                     {
-                        if (ActiveAPIDomain != null)
-                            inactiveDomains.Add(new Tuple<AppDomain, PropellerAPI>(ActiveAPIDomain, ActiveAPI));
-                        ActiveAPIDomain = newAPIDomain;
-                        ActiveAPI = newAPI;
+                        if (activeApiDomain != null)
+                            inactiveDomains.Add(new Tuple<AppDomain, PropellerApi>(activeApiDomain, ActiveApi));
+                        activeApiDomain = newApiDomain;
+                        ActiveApi = newApi;
                     }
 
                     lock (Log)
                         Log.Info("Propeller initialisation successful.");
                 }
 
-                var newInactiveDomains = new List<Tuple<AppDomain, PropellerAPI>>();
+                first = false;
+
+                var newInactiveDomains = new List<Tuple<AppDomain, PropellerApi>>();
                 foreach (var entry in inactiveDomains)
                 {
                     if (entry.E2.ActiveHandlers() == 0)

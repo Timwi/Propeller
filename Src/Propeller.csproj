@@ -58,9 +58,9 @@
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
       <Name>Util</Name>
     </ProjectReference>
-    <ProjectReference Include="..\API\PropellerAPI.csproj">
+    <ProjectReference Include="..\API\PropellerApi.csproj">
       <Project>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</Project>
-      <Name>PropellerAPI</Name>
+      <Name>PropellerApi</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
