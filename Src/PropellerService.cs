@@ -1,9 +1,8 @@
 ﻿using System.ServiceProcess;
 using System.Threading;
-using Propeller;
 using RT.Services;
 
-namespace RT.Propeller
+namespace Propeller
 {
     class PropellerService : SelfService
     {
@@ -38,7 +37,7 @@ namespace RT.Propeller
 
         protected override void OnStop()
         {
-            Program.Engine.Shutdown();
+            Program.Engine.Shutdown(false);
         }
 
         public void Shutdown()
