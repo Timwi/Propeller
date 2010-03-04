@@ -8,7 +8,7 @@
     <ProjectGuid>{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Propeller</RootNamespace>
+    <RootNamespace>RT.Propeller</RootNamespace>
     <AssemblyName>Propeller</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -36,6 +36,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -46,10 +47,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="PropellerService.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj">
+      <Project>{2D690226-CE76-4261-8778-87F7C213836A}</Project>
+      <Name>SelfService</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
       <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
       <Name>Servers</Name>

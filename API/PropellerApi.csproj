@@ -8,7 +8,7 @@
     <ProjectGuid>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Propeller</RootNamespace>
+    <RootNamespace>RT.Propeller</RootNamespace>
     <AssemblyName>PropellerApi</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

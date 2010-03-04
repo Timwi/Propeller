@@ -7,7 +7,7 @@ using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
-namespace Propeller
+namespace RT.Propeller
 {
     public interface IPropellerModule
     {
