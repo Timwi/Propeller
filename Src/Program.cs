@@ -1,27 +1,33 @@
 ﻿using System;
+using System.Linq;
 using System.ServiceProcess;
 using RT.Propeller;
+using RT.Services;
 
 namespace Propeller
 {
-    public class Program
+    class Program
     {
+        public static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
+        public static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
+        public static PropellerEngine Engine = new PropellerEngine();
+
         static void Main(string[] args)
         {
             if (args.Length == 0)
-                PropellerService.RunServiceStandalone(args);
+                Service.RunAsStandalone(args);
             else if (args[0] == "service")
-                PropellerService.ServiceProcess.ExecuteServices();
+                ServiceProcess.ExecuteServices();
 
             else if (args[0] == "install")
-                PropellerService.ServiceProcess.Install(ServiceAccount.NetworkService, "service");
+                ServiceProcess.Install(ServiceAccount.NetworkService, "service");
             else if (args[0] == "uninstall")
-                PropellerService.ServiceProcess.Uninstall();
+                ServiceProcess.Uninstall();
 
             else if (args[0] == "start")
-                PropellerService.ServiceProcess.StartAll();
+                ServiceProcess.StartAll();
             else if (args[0] == "stop")
-                PropellerService.ServiceProcess.StopAll();
+                ServiceProcess.StopAll();
 
             else
                 throw new InvalidOperationException("Unknown arguments. Valid arguments are: service, install, uninstall, start, stop. Or no arguments.");
