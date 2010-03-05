@@ -5,7 +5,7 @@ using RT.Util;
 namespace Propeller
 {
     [Serializable]
-    public class PropellerConfig
+    class PropellerConfig
     {
         public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = "$(AppPath)\\plugins";

@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("PropellerAPI")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("HP")]
+[assembly: AssemblyCompany("Aldaray")]
 [assembly: AssemblyProduct("PropellerAPI")]
-[assembly: AssemblyCopyright("Copyright © HP 2008")]
+[assembly: AssemblyCopyright("Copyright © Aldaray 2010")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

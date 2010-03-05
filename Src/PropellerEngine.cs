@@ -13,18 +13,22 @@ using RT.Util.Xml;
 
 namespace Propeller
 {
+    class AppDomainInfo
+    {
+        public AppDomain AppDomain;
+        public AppDomainRunner Runner;
+    }
+
     class PropellerEngine : Periodic
     {
-        private CrossAppDomainApi _activeApi = null;
+        private AppDomainInfo _activeAppDomain = null;
+        private List<AppDomainInfo> _inactiveAppDomains = new List<AppDomainInfo>();
         private int _apiCount = 0;
         private object _lockObject = new object();
-        private List<Tuple<AppDomain, CrossAppDomainApi>> inactiveDomains = new List<Tuple<AppDomain, CrossAppDomainApi>>();
-        private DateTime configFileChangeTime = DateTime.MinValue;
-        private ListeningThread currentListeningThread = null;
-        private PropellerConfig currentConfig = null;
-        private bool first = true;
-        private Tuple<string, DateTime>[] listOfPlugins = null;
-        private AppDomain activeApiDomain = null;
+        private ListeningThread _currentListeningThread = null;
+        private PropellerConfig _currentConfig = null;
+        private bool _firstRunEver = true;
+        private DateTime _configFileChangeTime = DateTime.MinValue;
 
         protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
 #if DEBUG
@@ -37,65 +41,56 @@ namespace Propeller
         {
             bool mustReinitServer = false;
 
-            if (first || !File.Exists(Program.ConfigPath) || currentConfig == null || configFileChangeTime < File.GetLastWriteTimeUtc(Program.ConfigPath))
+            if (_firstRunEver || !File.Exists(Program.ConfigPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(Program.ConfigPath))
             {
                 mustReinitServer = true;
                 refreshConfig();
             }
 
-            if (!Directory.Exists(currentConfig.PluginDirectoryExpanded))
-                try { Directory.CreateDirectory(currentConfig.PluginDirectoryExpanded); }
+            if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
+            {
+                try { Directory.CreateDirectory(_currentConfig.PluginDirectoryExpanded); }
                 catch (Exception e)
                 {
                     lock (Program.Log)
                     {
                         Program.Log.Error(e.Message);
-                        Program.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(currentConfig.PluginDirectoryExpanded));
+                        Program.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
                     }
                     Program.Service.Shutdown();
                     return;
                 }
-
-            // Detect if any DLL file has been added, deleted, renamed, or its date/time has changed
-            var newListOfPlugins = new DirectoryInfo(currentConfig.PluginDirectoryExpanded).GetFiles("*.dll").OrderBy(fi => fi.FullName).Select(fi => new Tuple<string, DateTime>(fi.FullName, fi.LastWriteTimeUtc)).ToArray();
-            if (listOfPlugins == null || !listOfPlugins.SequenceEqual(newListOfPlugins))
-            {
-                if (listOfPlugins != null)
-                    lock (Program.Log)
-                        Program.Log.Info(@"Change in plugin directory detected.");
-                mustReinitServer = true;
-                listOfPlugins = newListOfPlugins;
             }
 
             // Check whether any of the plugins reports that they need to be reinitialised.
-            if (!mustReinitServer && _activeApi != null)
-                mustReinitServer = _activeApi.MustReinitServer();
+            if (!mustReinitServer && _activeAppDomain.Runner != null)
+                mustReinitServer = _activeAppDomain.Runner.MustReinitServer();
 
             if (mustReinitServer)
                 reinitServer();
 
-            first = false;
+            _firstRunEver = false;
 
-            var newInactiveDomains = new List<Tuple<AppDomain, CrossAppDomainApi>>();
-            foreach (var entry in inactiveDomains)
+            var newInactiveDomains = new List<AppDomainInfo>();
+            foreach (var entry in _inactiveAppDomains)
             {
-                if (entry.E2.ActiveHandlers() == 0)
+                if (entry.Runner.ActiveHandlers() == 0)
                 {
-                    entry.E2.Shutdown();
-                    AppDomain.Unload(entry.E1);
+                    entry.Runner.Shutdown();
+                    AppDomain.Unload(entry.AppDomain);
                 }
                 else
                     newInactiveDomains.Add(entry);
             }
-            inactiveDomains = newInactiveDomains;
+            _inactiveAppDomains = newInactiveDomains;
         }
 
         private void refreshConfig()
         {
             // Read configuration file
-            configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
+            _configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
             lock (Program.Log)
-                Program.Log.Info((first ? "Loading config file: " : "Reloading config file: ") + Program.ConfigPath);
+                Program.Log.Info((_firstRunEver ? "Loading config file: " : "Reloading config file: ") + Program.ConfigPath);
             PropellerConfig newConfig;
             try
             {
@@ -113,7 +108,7 @@ namespace Propeller
                         XmlClassify.SaveObjectToXmlFile(newConfig, Program.ConfigPath);
                         lock (Program.Log)
                             Program.Log.Info("Default config saved to {0}.".Fmt(Program.ConfigPath));
-                        configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
+                        _configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
                     }
                     catch (Exception e)
                     {
@@ -124,23 +119,23 @@ namespace Propeller
             }
 
             // If port number is different from previous port number, create a new listening thread and kill the old one
-            if (first || currentConfig == null || (newConfig.ServerOptions.Port != currentConfig.ServerOptions.Port))
+            if (_firstRunEver || _currentConfig == null || (newConfig.ServerOptions.Port != _currentConfig.ServerOptions.Port))
             {
-                if (!first)
+                if (!_firstRunEver)
                     lock (Program.Log)
-                        Program.Log.Info("Switching from port {0} to port {1}.".Fmt(currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
-                if (currentListeningThread != null)
-                    currentListeningThread.ShouldExit = true;
-                currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port);
+                        Program.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
+                if (_currentListeningThread != null)
+                    _currentListeningThread.ShouldExit = true;
+                _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port);
             }
 
-            currentConfig = newConfig;
+            _currentConfig = newConfig;
         }
 
         private void reinitServer()
         {
             lock (Program.Log)
-                Program.Log.Info(first ? "Starting Propeller..." : "Restarting Propeller...");
+                Program.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
 
             // Try to clean up old folders we've created before
             var tempPath = Path.GetTempPath();
@@ -163,44 +158,21 @@ namespace Propeller
             }
             Directory.CreateDirectory(copyToPath);
 
-            // Copy the DLLs into the new folder and simultaneously create the list of DllInfo objects for them.
-            var dlls = new List<DllInfo>();
-            foreach (var plugin in listOfPlugins)
-            {
-                var dll = new DllInfo
-                {
-                    OrigDllPath = plugin.E1,
-                    TempDllPath = Path.Combine(copyToPath, Path.GetFileName(plugin.E1))
-                };
-                try
-                {
-                    File.Copy(dll.OrigDllPath, dll.TempDllPath);
-                }
-                catch (Exception e)
-                {
-                    lock (Program.Log)
-                        Program.Log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2} - Ignoring plugin.".Fmt(dll.OrigDllPath, dll.TempDllPath, e.Message));
-                    continue;
-                }
-                dlls.Add(dll);
-            }
-
-            AppDomain newApiDomain = AppDomain.CreateDomain("Propeller API " + (_apiCount++), null, new AppDomainSetup
+            AppDomain newAppDomain = AppDomain.CreateDomain("Propeller AppDomainRunner " + (_apiCount++), null, new AppDomainSetup
             {
                 ApplicationBase = PathUtil.AppPath,
                 PrivateBinPath = copyToPath,
             });
-            CrossAppDomainApi newApi = (CrossAppDomainApi) newApiDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.CrossAppDomainApi");
+            AppDomainRunner newRunner = (AppDomainRunner) newAppDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.AppDomainRunner");
 
             lock (Program.Log)
-                newApi.Init(currentConfig.ServerOptions, dlls, Program.Log);
+                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, Program.Log);
 
             lock (_lockObject)
             {
-                if (activeApiDomain != null)
-                    inactiveDomains.Add(new Tuple<AppDomain, CrossAppDomainApi>(activeApiDomain, _activeApi));
-                activeApiDomain = newApiDomain;
-                _activeApi = newApi;
+                if (_activeAppDomain != null)
+                    _inactiveAppDomains.Add(_activeAppDomain);
+                _activeAppDomain = new AppDomainInfo { AppDomain = newAppDomain, Runner = newRunner };
             }
 
             lock (Program.Log)
@@ -209,11 +181,11 @@ namespace Propeller
 
         public override bool Shutdown(bool waitForExit)
         {
-            if (currentListeningThread != null)
+            if (_currentListeningThread != null)
             {
-                currentListeningThread.ShouldExit = true;
+                _currentListeningThread.ShouldExit = true;
                 if (waitForExit)
-                    currentListeningThread.WaitExited();
+                    _currentListeningThread.WaitExited();
             }
 
             return base.Shutdown(waitForExit);
@@ -277,9 +249,9 @@ namespace Propeller
                 {
                     try
                     {
-                        if (_super._activeApi != null)
+                        if (_super._activeAppDomain.Runner != null)
                             // This creates a new thread for handling the connection and returns pretty immediately.
-                            _super._activeApi.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id));
+                            _super._activeAppDomain.Runner.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id));
                         else
                             sck.Close();
                     }
