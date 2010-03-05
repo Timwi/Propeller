@@ -23,6 +23,9 @@ namespace Propeller
 
         /// <summary>Path to the DLL in the temp folder where <see cref="AppDomainRunner"/> has copied it.</summary>
         public string TempDllPath;
+
+        /// <summary>The name of this module, for use in the UI such as log messages.</summary>
+        public string UiName { get { return Path.GetFileNameWithoutExtension(OrigDllPath); } }
     }
 
     /// <summary>Contains the code that runs in an AppDomain separate from the main Propeller code (<see cref="PropellerEngine"/>).</summary>
@@ -63,6 +66,13 @@ namespace Propeller
                 _dlls.Add(dll);
             }
 
+            lock (_log)
+            {
+                _log.Info("Attempting to initialise {0} module(s):".Fmt(_dlls.Count));
+                foreach (var dll in _dlls)
+                    _log.Info("   {0} from {1}".Fmt(dll.UiName, dll.OrigDllPath));
+            }
+
             addFileSystemWatcher(originalDllPath, "*.dll");
 
             foreach (var dll in _dlls)
@@ -93,7 +103,18 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        logException(e, Path.GetFileName(dll.OrigDllPath), thrownBy);
+                        logException(e, dll, thrownBy);
+                        continue;
+                    }
+
+                    if (result.FileFiltersToBeMonitoredForChanges == null)
+                    {
+                        logError("The Init() method of the \"{0}\" plugin returned an invalid result: FileFiltersToBeMonitoredForChanges is null.".Fmt(dll.UiName));
+                        continue;
+                    }
+                    if (result.HandlerHooks == null)
+                    {
+                        logError("The Init() method of the \"{0}\" plugin returned an invalid result: HandlerHooks is null.".Fmt(dll.UiName));
                         continue;
                     }
 
@@ -101,25 +122,44 @@ namespace Propeller
                         foreach (var handler in result.HandlerHooks)
                             _server.RequestHandlerHooks.Add(handler);
 
-                    foreach (var filter in result.FileFiltersToBeMonitoredForChanges)
-                        addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
+                    try
+                    {
+                        foreach (var filter in result.FileFiltersToBeMonitoredForChanges)
+                            addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
+                    }
+                    catch (Exception e)
+                    {
+                        logException(e, dll, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
+                        continue;
+                    }
 
                     dll.Module = module;
                 }
             }
+
+            _dlls = _dlls.Where(d => d.Module != null).ToList();
+
+            lock (_log)
+                _log.Info("{0} module(s) are active: {1}".Fmt(_dlls.Count, _dlls.Select(dll => dll.UiName).JoinString(", ")));
         }
 
-        private void logException(Exception e, string dllOrigPath, string thrownBy)
+        private void logException(Exception e, DllInfo dll, string thrownBy)
         {
             lock (_log)
             {
-                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})", dllOrigPath, e.Message, e.GetType().FullName, thrownBy);
+                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})", dll.UiName, e.Message, e.GetType().FullName, thrownBy);
                 while (e.InnerException != null)
                 {
                     e = e.InnerException;
                     _log.Error(" -- Inner exception: {0} ({1})", e.Message, e.GetType().FullName);
                 }
             }
+        }
+
+        private void logError(string message)
+        {
+            lock (_log)
+                _log.Error(message);
         }
 
         private void addFileSystemWatcher(string path, string filter)
@@ -146,7 +186,7 @@ namespace Propeller
             if (_filesChangedCount > 0)
             {
                 lock (_log)
-                    _log.Info(@"Detected changes to {0} file(s), including ""{1}"".".Fmt(_filesChangedCount, _fileChanged));
+                    _log.Info(@"Detected {0} changes to the filesystem, including ""{1}"".".Fmt(_filesChangedCount, _fileChanged));
                 return true;
             }
             foreach (var dll in _dlls.Where(d => d.Module != null))
@@ -158,7 +198,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    logException(e, dll.OrigDllPath, "MustReinitServer()");
+                    logException(e, dll, "MustReinitServer()");
                 }
             }
             return false;
@@ -169,7 +209,7 @@ namespace Propeller
             foreach (var dll in _dlls.Where(d => d.Module != null))
             {
                 try { dll.Module.Shutdown(); }
-                catch (Exception e) { logException(e, dll.OrigDllPath, "Shutdown()"); }
+                catch (Exception e) { logException(e, dll, "Shutdown()"); }
             }
         }
 
