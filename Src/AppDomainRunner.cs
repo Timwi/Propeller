@@ -81,24 +81,43 @@ namespace Propeller
                             log.Error("Plugin {0} contains more than one module. Each plugin is only allowed to contain one module. The module {1} is used, all other modules are ignored.".Fmt(Path.GetFileName(dll.OrigDllPath), dll.Module.GetType().FullName));
                         break;
                     }
+
+                    IPropellerModule module;
+                    PropellerModuleInitResult result;
+                    string thrownBy = "constructor";
                     try
                     {
-                        var module = (IPropellerModule) Activator.CreateInstance(type);
-                        var result = module.Init(dll.OrigDllPath, dll.TempDllPath, log);
-                        if (result.HandlerHooks != null)
-                            foreach (var handler in result.HandlerHooks)
-                                _server.RequestHandlerHooks.Add(handler);
-
-                        foreach (var filter in result.FileFiltersToBeMonitoredForChanges)
-                            addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
-
-                        dll.Module = module;
+                        module = (IPropellerModule) Activator.CreateInstance(type);
+                        thrownBy = "Init()";
+                        result = module.Init(dll.OrigDllPath, dll.TempDllPath, log);
                     }
                     catch (Exception e)
                     {
-                        lock (log)
-                            log.Error("Error initialising plugin {0}: {1} - The plugin will be ignored.", Path.GetFileName(dll.OrigDllPath), e.Message);
+                        logException(e, Path.GetFileName(dll.OrigDllPath), thrownBy);
+                        continue;
                     }
+
+                    if (result.HandlerHooks != null)
+                        foreach (var handler in result.HandlerHooks)
+                            _server.RequestHandlerHooks.Add(handler);
+
+                    foreach (var filter in result.FileFiltersToBeMonitoredForChanges)
+                        addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
+
+                    dll.Module = module;
+                }
+            }
+        }
+
+        private void logException(Exception e, string dllOrigPath, string thrownBy)
+        {
+            lock (_log)
+            {
+                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})", dllOrigPath, e.Message, e.GetType().FullName, thrownBy);
+                while (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                    _log.Error(" -- Inner exception: {0} ({1})", e.Message, e.GetType().FullName);
                 }
             }
         }
@@ -130,17 +149,28 @@ namespace Propeller
                     _log.Info(@"Detected changes to {0} file(s), including ""{1}"".".Fmt(_filesChangedCount, _fileChanged));
                 return true;
             }
-            foreach (var dll in _dlls)
-                if (dll.Module != null && dll.Module.MustReinitServer())
-                    return true;
+            foreach (var dll in _dlls.Where(d => d.Module != null))
+            {
+                try
+                {
+                    if (dll.Module.MustReinitServer())
+                        return true;
+                }
+                catch (Exception e)
+                {
+                    logException(e, dll.OrigDllPath, "MustReinitServer()");
+                }
+            }
             return false;
         }
 
         public void Shutdown()
         {
-            foreach (var dll in _dlls)
-                if (dll.Module != null)
-                    dll.Module.Shutdown();
+            foreach (var dll in _dlls.Where(d => d.Module != null))
+            {
+                try { dll.Module.Shutdown(); }
+                catch (Exception e) { logException(e, dll.OrigDllPath, "Shutdown()"); }
+            }
         }
 
         public void HandleRequest(SocketInformation sckInfo)
