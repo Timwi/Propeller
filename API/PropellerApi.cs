@@ -7,6 +7,9 @@ namespace RT.PropellerApi
     /// <summary>Implement this interface to create a module for Propeller, the flexible HTTP webserver.</summary>
     public interface IPropellerModule
     {
+        /// <summary>When implemented in a class, returns a human-readable name of the plugin.</summary>
+        string GetName();
+
         /// <summary>When implemented in a class, initialises the module.</summary>
         /// <remarks>Every time the Propeller server re-initialises, it instantiates the class and then calls this method.</remarks>
         /// <param name="origDllPath">Path to the DLL file in the Propeller plugins directory.</param>
