@@ -35,7 +35,11 @@
     <Error Condition="'$(DeployPath)'==''" Text="DeployPath must be specified"/>
     <Exec Command="net stop PropellerService" IgnoreExitCode="true"/>
     <MakeDir Directories="$(DeployPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
-    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Merged\Propeller.exe" DestinationFolder="$(DeployPath)"/>
+    <ItemGroup>
+      <BuildOutputs Include="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Raw\*.exe"/>
+      <BuildOutputs Include="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Raw\*.dll"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(DeployPath)"/>
     <Exec Command="net start PropellerService"/>
   </Target>
 
