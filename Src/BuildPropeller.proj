@@ -1,0 +1,42 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+         DefaultTargets="Version;Build" ToolsVersion="3.5">
+  <Import Project="..\common\Build\CommonImports.proj"/>
+  <PropertyGroup>
+    <ProjectName>Propeller</ProjectName>
+    <BuildsPath Condition="'$(BuildsPath)'==''">..\..\builds</BuildsPath>
+  </PropertyGroup>
+
+
+  <Target Name="Version">
+    <AssemblyVersion AssemblyFile="Properties\AssemblyInfo.cs" VersionTemplate="?.?.$(BuildId).$(ChangeId)">
+      <Output TaskParameter="Version" PropertyName="Version"/>
+    </AssemblyVersion>
+  </Target>
+
+
+  <Target Name="Build" DependsOnTargets="BuildDebug;BuildRelease">
+  </Target>
+
+
+  <Target Name="BuildDebug">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Debug;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <Target Name="BuildRelease">
+    <MSBuild Projects="Build$(ProjectName)Single.proj"
+             Properties="Configuration=Release;ProjectName=$(ProjectName);BuildsPath=$(BuildsPath);Version=$(Version)"/>
+  </Target>
+
+
+  <!-- Propeller-service-specific stuff -->
+  <Target Name="Deploy" DependsOnTargets="BuildRelease">
+    <Error Condition="'$(DeployPath)'==''" Text="DeployPath must be specified"/>
+    <Exec Command="net stop PropellerService" IgnoreExitCode="true"/>
+    <MakeDir Directories="$(DeployPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
+    <Copy SourceFiles="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Merged\Propeller.exe" DestinationFolder="$(DeployPath)"/>
+    <Exec Command="net start PropellerService"/>
+  </Target>
+
+</Project>
