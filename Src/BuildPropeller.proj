@@ -43,4 +43,16 @@
     <Exec Command="net start PropellerService"/>
   </Target>
 
+
+  <!-- Deploy the PropellerApi documentation to DocGen (debug build) -->
+  <Target Name="DeployToDocGen" DependsOnTargets="BuildDebug">
+    <Error Condition="'$(DeployToDocGenPath)'==''" Text="DeployToDocGenPath must be specified"/>
+    <MakeDir Directories="$(DeployToDocGenPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
+    <ItemGroup>
+      <BuildOutputs Include="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\*.dll"/>
+      <BuildOutputs Include="$(BuildsPath)\$(ProjectName)\Debug-AnyCPU-Raw\*.docs.xml"/>
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildOutputs)" DestinationFolder="$(DeployToDocGenPath)"/>
+  </Target>
+
 </Project>
