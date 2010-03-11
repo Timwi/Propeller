@@ -138,11 +138,11 @@ namespace Propeller
         {
             lock (_log)
             {
-                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})", pluginName, e.Message, e.GetType().FullName, thrownBy);
+                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})".Fmt(pluginName, e.Message, e.GetType().FullName, thrownBy));
                 while (e.InnerException != null)
                 {
                     e = e.InnerException;
-                    _log.Error(" -- Inner exception: {0} ({1})", e.Message, e.GetType().FullName);
+                    _log.Error(" -- Inner exception: {0} ({1})".Fmt(e.Message, e.GetType().FullName));
                 }
             }
         }
