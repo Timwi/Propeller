@@ -20,8 +20,7 @@ namespace Propeller
         static void Main(string[] args)
         {
             Log.Loggers.Add("console", new ConsoleLogger { TimestampInUTC = true });
-            try { Log.Loggers.Add("file", new StreamLogger(File.Open(PropellerLogFile, FileMode.Append, FileAccess.Write, FileShare.Read))); }
-            catch { Log.Warn("Could not open Propeller log file for writing; will log to console only. File: {0}".Fmt(PropellerLogFile)); }
+            Log.Loggers.Add("file", new FileAppendLogger(PropellerLogFile));
             Log.Info("");
             Log.Info("");
             Log.Info("");

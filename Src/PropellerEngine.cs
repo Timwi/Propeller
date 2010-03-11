@@ -23,7 +23,7 @@ namespace Propeller
     {
         private AppDomainInfo _activeAppDomain = null;
         private List<AppDomainInfo> _inactiveAppDomains = new List<AppDomainInfo>();
-        private int _apiCount = 0;
+        private int _appDomainCount = 0;
         private object _lockObject = new object();
         private ListeningThread _currentListeningThread = null;
         private PropellerConfig _currentConfig = null;
@@ -141,10 +141,7 @@ namespace Propeller
             var tempPath = Path.GetTempPath();
             foreach (var pth in Directory.GetDirectories(tempPath, "propeller-tmp-*"))
             {
-                foreach (var file in Directory.GetFiles(pth))
-                    try { File.Delete(file); }
-                    catch { }
-                try { Directory.Delete(pth); }
+                try { Directory.Delete(pth, true); }
                 catch { }
             }
 
@@ -158,7 +155,7 @@ namespace Propeller
             }
             Directory.CreateDirectory(copyToPath);
 
-            AppDomain newAppDomain = AppDomain.CreateDomain("Propeller AppDomainRunner " + (_apiCount++), null, new AppDomainSetup
+            AppDomain newAppDomain = AppDomain.CreateDomain("Propeller AppDomainRunner " + (_appDomainCount++), null, new AppDomainSetup
             {
                 ApplicationBase = PathUtil.AppPath,
                 PrivateBinPath = copyToPath,
