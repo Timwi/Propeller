@@ -10,5 +10,6 @@ namespace Propeller
         public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = "$(AppPath)\\plugins";
         public string PluginDirectoryExpanded { get { return PathUtil.ExpandPath(PluginDirectory); } }
+        public string LogVerbosity = "1d0";
     }
 }

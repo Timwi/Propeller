@@ -19,7 +19,7 @@ namespace Propeller
         public AppDomainRunner Runner;
     }
 
-    class PropellerEngine : Periodic
+    class PropellerEngine : PeriodicMultiple
     {
         private AppDomainInfo _activeAppDomain = null;
         private List<AppDomainInfo> _inactiveAppDomains = new List<AppDomainInfo>();
@@ -31,13 +31,29 @@ namespace Propeller
         private DateTime _configFileChangeTime = DateTime.MinValue;
 
         protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
+
+        public PropellerEngine()
+        {
 #if DEBUG
-        protected override TimeSpan SubsequentInterval { get { return TimeSpan.FromSeconds(1); } }
+            var checkInterval = TimeSpan.FromSeconds(1);
 #else
-            protected override TimeSpan SubsequentInterval { get { return TimeSpan.FromSeconds(10); } }
+            var checkInterval = TimeSpan.FromSeconds(10);
 #endif
 
-        protected override void PeriodicActivity()
+            Tasks = new List<Task>
+            {
+                new Task() { Action = logHeartbeat, MinInterval = TimeSpan.FromMinutes(5) },
+                new Task() { Action = checkAndProcessFileChanges, MinInterval = checkInterval },
+            };
+        }
+
+        private void logHeartbeat()
+        {
+            lock (Program.Log)
+                Program.Log.Debug("Heartbeat");
+        }
+
+        private void checkAndProcessFileChanges()
         {
             bool mustReinitServer = false;
 
@@ -136,6 +152,9 @@ namespace Propeller
         {
             lock (Program.Log)
                 Program.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
+
+            lock (Program.Log)
+                Program.Log.ConfigureVerbosity(_currentConfig.LogVerbosity);
 
             // Try to clean up old folders we've created before
             var tempPath = Path.GetTempPath();
