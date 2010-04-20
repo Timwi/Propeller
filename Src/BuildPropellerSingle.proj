@@ -1,6 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
          DefaultTargets="Build"
-         ToolsVersion="3.5">
+         ToolsVersion="4.0">
   <Import Project="..\common\Build\CommonImports.proj"/>
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)'==''">Release</Configuration>
