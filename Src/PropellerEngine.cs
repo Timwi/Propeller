@@ -13,13 +13,13 @@ using RT.Util.Xml;
 
 namespace Propeller
 {
-    class AppDomainInfo
+    sealed class AppDomainInfo
     {
         public AppDomain AppDomain;
         public AppDomainRunner Runner;
     }
 
-    class PropellerEngine : PeriodicMultiple
+    sealed class PropellerEngine : PeriodicMultiple
     {
         private AppDomainInfo _activeAppDomain = null;
         private List<AppDomainInfo> _inactiveAppDomains = new List<AppDomainInfo>();
@@ -207,7 +207,7 @@ namespace Propeller
             return base.Shutdown(waitForExit);
         }
 
-        private class ListeningThread : ThreadExiter
+        private sealed class ListeningThread : ThreadExiter
         {
             private Thread _listeningThread;
             private PropellerEngine _super;
