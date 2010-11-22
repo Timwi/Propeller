@@ -141,7 +141,7 @@ namespace Propeller
                     lock (Program.Log)
                         Program.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
                 if (_currentListeningThread != null)
-                    _currentListeningThread.ShouldExit = true;
+                    _currentListeningThread.RequestExit();
                 _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port);
             }
 
@@ -199,7 +199,7 @@ namespace Propeller
         {
             if (_currentListeningThread != null)
             {
-                _currentListeningThread.ShouldExit = true;
+                _currentListeningThread.RequestExit(); ;
                 if (waitForExit)
                     _currentListeningThread.WaitExited();
             }
@@ -207,11 +207,13 @@ namespace Propeller
             return base.Shutdown(waitForExit);
         }
 
-        private sealed class ListeningThread : ThreadExiter
+        private sealed class ListeningThread
         {
             private Thread _listeningThread;
             private PropellerEngine _super;
             private int _port;
+            private CancellationTokenSource _cancel = new CancellationTokenSource();
+            private ManualResetEventSlim _exited = new ManualResetEventSlim();
 
             public ListeningThread(PropellerEngine super, int port)
             {
@@ -219,6 +221,16 @@ namespace Propeller
                 _port = port;
                 _listeningThread = new Thread(listeningThreadFunction);
                 _listeningThread.Start();
+            }
+
+            public void WaitExited()
+            {
+                _exited.Wait();
+            }
+
+            public void RequestExit()
+            {
+                _cancel.Cancel();
             }
 
             private void listeningThreadFunction()
@@ -234,12 +246,12 @@ namespace Propeller
                 {
                     lock (Program.Log)
                         Program.Log.Error("Cannot bind to port {0}: {1}".Fmt(_port, e.Message));
-                    SignalExited();
+                    _exited.Set();
                     return;
                 }
                 try
                 {
-                    while (!ShouldExit)
+                    while (!_cancel.IsCancellationRequested)
                     {
                         if (listener.Pending())
                             listener.BeginAcceptSocket(acceptConnection, listener);
@@ -253,7 +265,7 @@ namespace Propeller
                         Program.Log.Info("Stop listening on port " + _port);
                     try { listener.Stop(); }
                     catch { }
-                    SignalExited();
+                    _exited.Set();
                 }
             }
 
