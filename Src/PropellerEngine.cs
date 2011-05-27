@@ -90,7 +90,7 @@ namespace Propeller
             var newInactiveDomains = new List<AppDomainInfo>();
             foreach (var entry in _inactiveAppDomains)
             {
-                if (entry.Runner.ActiveHandlers() == 0)
+                if (entry.Runner.Stats.ActiveHandlers == 0)
                 {
                     entry.Runner.Shutdown();
                     AppDomain.Unload(entry.AppDomain);

@@ -210,9 +210,12 @@ namespace Propeller
             _server.HandleRequest(sck, false);
         }
 
-        public int ActiveHandlers()
+        public HttpServer.Statistics Stats
         {
-            return _server.ActiveHandlers;
+            get
+            {
+                return _server.Stats;
+            }
         }
     }
 }
