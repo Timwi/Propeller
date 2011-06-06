@@ -4,8 +4,8 @@ using RT.Util;
 
 namespace Propeller
 {
-    [Serializable]
-    class PropellerConfig
+    [Settings("Propeller", SettingsKind.Global)]
+    sealed class PropellerSettings : SettingsBase
     {
         public HttpServerOptions ServerOptions = new HttpServerOptions();
         public string PluginDirectory = "$(AppPath)\\plugins";

@@ -2,14 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using RT.Util;
-using RT.Util.Collections;
 using RT.Util.ExtensionMethods;
-using RT.Util.Xml;
 
 namespace Propeller
 {
@@ -26,7 +23,7 @@ namespace Propeller
         private int _appDomainCount = 0;
         private object _lockObject = new object();
         private ListeningThread _currentListeningThread = null;
-        private PropellerConfig _currentConfig = null;
+        private PropellerSettings _currentConfig = null;
         private bool _firstRunEver = true;
         private DateTime _configFileChangeTime = DateTime.MinValue;
 
@@ -53,11 +50,13 @@ namespace Propeller
                 Program.Log.Debug("Heartbeat");
         }
 
+        private static string configPath { get { return SettingsUtil.GetAttribute<PropellerSettings>().GetFileName(); } }
+
         private void checkAndProcessFileChanges()
         {
             bool mustReinitServer = false;
 
-            if (_firstRunEver || !File.Exists(Program.ConfigPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(Program.ConfigPath))
+            if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
             {
                 mustReinitServer = true;
                 refreshConfig();
@@ -104,32 +103,33 @@ namespace Propeller
         private void refreshConfig()
         {
             // Read configuration file
-            _configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
+            _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
             lock (Program.Log)
-                Program.Log.Info((_firstRunEver ? "Loading config file: " : "Reloading config file: ") + Program.ConfigPath);
-            PropellerConfig newConfig;
+                Program.Log.Info((_firstRunEver ? "Loading config file: " : "Reloading config file: ") + configPath);
+            PropellerSettings newConfig;
             try
             {
-                newConfig = XmlClassify.LoadObjectFromXmlFile<PropellerConfig>(Program.ConfigPath);
+                if (!SettingsUtil.LoadSettings(out newConfig))
+                    throw new Exception(); // will be caught straight away
             }
             catch
             {
                 lock (Program.Log)
                     Program.Log.Warn("Config file could not be loaded; using default config.");
-                newConfig = new PropellerConfig();
-                if (!File.Exists(Program.ConfigPath))
+                newConfig = new PropellerSettings();
+                if (!File.Exists(configPath))
                 {
                     try
                     {
-                        XmlClassify.SaveObjectToXmlFile(newConfig, Program.ConfigPath);
+                        newConfig.Save();
                         lock (Program.Log)
-                            Program.Log.Info("Default config saved to {0}.".Fmt(Program.ConfigPath));
-                        _configFileChangeTime = new FileInfo(Program.ConfigPath).LastWriteTimeUtc;
+                            Program.Log.Info("Default config saved to {0}.".Fmt(configPath));
+                        _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
                     }
                     catch (Exception e)
                     {
                         lock (Program.Log)
-                            Program.Log.Warn("Attempt to save default config to {0} failed: {1}".Fmt(Program.ConfigPath, e.Message));
+                            Program.Log.Warn("Attempt to save default config to {0} failed: {1}".Fmt(configPath, e.Message));
                     }
                 }
             }

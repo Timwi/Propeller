@@ -13,7 +13,6 @@ namespace Propeller
         public static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
         public static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
         public static PropellerEngine Engine = new PropellerEngine();
-        public static string ConfigPath = PathUtil.AppPathCombine("Propeller.config.xml");
         public static string PropellerLogFile = PathUtil.AppPathCombine("Propeller.log");
         public static MulticastLogger Log = new MulticastLogger();
 
