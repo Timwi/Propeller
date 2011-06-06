@@ -39,4 +39,19 @@ namespace RT.PropellerApi
         /// Propeller will completely re-initialise itself and all modules.</summary>
         public IEnumerable<string> FileFiltersToBeMonitoredForChanges;
     }
+
+    /// <summary>Contains extension methods for the <see cref="IPropellerModule"/> interface.</summary>
+    public static class IPropellerModuleExtensions
+    {
+        /// <summary>Executes this propeller module in standalone mode (as opposed to being hosted by Propeller).</summary>
+        public static void RunStandalone(this IPropellerModule module, HttpServerOptions options)
+        {
+            var server = new HttpServer(options);
+            var logger = new ConsoleLogger();
+            var result = module.Init(PathUtil.AppPath, PathUtil.AppPath, logger);
+            server.RequestHandlerHooks.AddRange(result.HandlerHooks);
+            logger.Info(string.Format("Starting server on port {0} (Propeller module in standalone mode)", options.Port));
+            server.StartListening(true);
+        }
+    }
 }
