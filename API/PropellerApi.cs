@@ -49,7 +49,8 @@ namespace RT.PropellerApi
             var server = new HttpServer(options);
             var logger = new ConsoleLogger();
             var result = module.Init(PathUtil.AppPath, PathUtil.AppPath, logger);
-            server.RequestHandlerHooks.AddRange(result.HandlerHooks);
+            if (result != null && result.HandlerHooks != null)
+                server.RequestHandlerHooks.AddRange(result.HandlerHooks);
             logger.Info(string.Format("Starting server on port {0} (Propeller module in standalone mode)", options.Port));
             server.StartListening(true);
         }
