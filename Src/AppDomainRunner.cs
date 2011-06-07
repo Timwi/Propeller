@@ -46,9 +46,11 @@ namespace Propeller
             _dlls = new List<DllInfo>();
 
             addFileSystemWatcher(pluginDir, "*.dll");
+            addFileSystemWatcher(pluginDir, "*.exe");
 
             // Copy the DLLs into the new folder and simultaneously create the list of DllInfo objects for them.
-            foreach (var plugin in new DirectoryInfo(pluginDir).GetFiles("*.dll"))
+            var dirinfo = new DirectoryInfo(pluginDir);
+            foreach (var plugin in dirinfo.GetFiles("*.dll").Concat(dirinfo.GetFiles("*.exe")))
             {
                 var origDllPath = plugin.FullName;
                 var tempDllPath = Path.Combine(tempDir, plugin.Name);
