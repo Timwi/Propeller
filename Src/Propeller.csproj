@@ -50,7 +50,6 @@
     <Compile Include="PropellerService.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PropellerSettings.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

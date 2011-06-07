@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PropellerApi.cs" />
+    <Compile Include="PropellerSettings.cs" />
+    <Compile Include="PropellerStandalone.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

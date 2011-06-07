@@ -5,6 +5,8 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using RT.Propeller;
+using RT.PropellerApi;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
@@ -104,35 +106,8 @@ namespace Propeller
         {
             // Read configuration file
             _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
-            lock (Program.Log)
-                Program.Log.Info((_firstRunEver ? "Loading config file: " : "Reloading config file: ") + configPath);
-            PropellerSettings newConfig;
-            try
-            {
-                if (!SettingsUtil.LoadSettings(out newConfig))
-                    throw new Exception(); // will be caught straight away
-            }
-            catch
-            {
-                lock (Program.Log)
-                    Program.Log.Warn("Config file could not be loaded; using default config.");
-                newConfig = new PropellerSettings();
-                if (!File.Exists(configPath))
-                {
-                    try
-                    {
-                        newConfig.Save();
-                        lock (Program.Log)
-                            Program.Log.Info("Default config saved to {0}.".Fmt(configPath));
-                        _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
-                    }
-                    catch (Exception e)
-                    {
-                        lock (Program.Log)
-                            Program.Log.Warn("Attempt to save default config to {0} failed: {1}".Fmt(configPath, e.Message));
-                    }
-                }
-            }
+            var newConfig = PropellerStandalone.LoadSettings(Program.Log, _firstRunEver);
+            _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc; // a new file may have been created
 
             // If port number is different from previous port number, create a new listening thread and kill the old one
             if (_firstRunEver || _currentConfig == null || (newConfig.ServerOptions.Port != _currentConfig.ServerOptions.Port))
