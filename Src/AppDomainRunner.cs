@@ -107,8 +107,7 @@ namespace Propeller
                     }
 
                     if (result != null && result.HandlerHooks != null)
-                        foreach (var handler in result.HandlerHooks)
-                            _server.RequestHandlerHooks.Add(handler);
+                        _server.RequestHandlerHooks.AddRange(result.HandlerHooks);
 
                     try
                     {
