@@ -45,8 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppDomainRunner.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="PropellerEngine.cs" />
+    <Compile Include="PropellerProgram.cs" />
     <Compile Include="PropellerService.cs">
       <SubType>Component</SubType>
     </Compile>
