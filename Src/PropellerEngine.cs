@@ -48,8 +48,8 @@ namespace Propeller
 
         private void logHeartbeat()
         {
-            lock (Program.Log)
-                Program.Log.Debug("Heartbeat");
+            lock (PropellerProgram.Log)
+                PropellerProgram.Log.Debug("Heartbeat");
         }
 
         private static string configPath { get { return SettingsUtil.GetAttribute<PropellerSettings>().GetFileName(); } }
@@ -69,12 +69,12 @@ namespace Propeller
                 try { Directory.CreateDirectory(_currentConfig.PluginDirectoryExpanded); }
                 catch (Exception e)
                 {
-                    lock (Program.Log)
+                    lock (PropellerProgram.Log)
                     {
-                        Program.Log.Error(e.Message);
-                        Program.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
+                        PropellerProgram.Log.Error(e.Message);
+                        PropellerProgram.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
                     }
-                    Program.Service.Shutdown();
+                    PropellerProgram.Service.Shutdown();
                     return;
                 }
             }
@@ -106,15 +106,15 @@ namespace Propeller
         {
             // Read configuration file
             _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
-            var newConfig = PropellerStandalone.LoadSettings(Program.Log, _firstRunEver);
+            var newConfig = PropellerStandalone.LoadSettings(PropellerProgram.Log, _firstRunEver);
             _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc; // a new file may have been created
 
             // If port number is different from previous port number, create a new listening thread and kill the old one
             if (_firstRunEver || _currentConfig == null || (newConfig.ServerOptions.Port != _currentConfig.ServerOptions.Port))
             {
                 if (!_firstRunEver)
-                    lock (Program.Log)
-                        Program.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
+                    lock (PropellerProgram.Log)
+                        PropellerProgram.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
                 if (_currentListeningThread != null)
                     _currentListeningThread.RequestExit();
                 _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port);
@@ -125,11 +125,11 @@ namespace Propeller
 
         private void reinitServer()
         {
-            lock (Program.Log)
-                Program.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
+            lock (PropellerProgram.Log)
+                PropellerProgram.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
 
-            lock (Program.Log)
-                Program.Log.ConfigureVerbosity(_currentConfig.LogVerbosity);
+            lock (PropellerProgram.Log)
+                PropellerProgram.Log.ConfigureVerbosity(_currentConfig.LogVerbosity);
 
             // Try to clean up old folders we've created before
             var tempPath = Path.GetTempPath();
@@ -156,8 +156,8 @@ namespace Propeller
             });
             AppDomainRunner newRunner = (AppDomainRunner) newAppDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.AppDomainRunner");
 
-            lock (Program.Log)
-                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, Program.Log);
+            lock (PropellerProgram.Log)
+                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log);
 
             lock (_lockObject)
             {
@@ -166,8 +166,8 @@ namespace Propeller
                 _activeAppDomain = new AppDomainInfo { AppDomain = newAppDomain, Runner = newRunner };
             }
 
-            lock (Program.Log)
-                Program.Log.Info("Propeller initialisation successful.");
+            lock (PropellerProgram.Log)
+                PropellerProgram.Log.Info("Propeller initialisation successful.");
         }
 
         public override bool Shutdown(bool waitForExit)
@@ -210,8 +210,8 @@ namespace Propeller
 
             private void listeningThreadFunction()
             {
-                lock (Program.Log)
-                    Program.Log.Info("Start listening on port " + _port);
+                lock (PropellerProgram.Log)
+                    PropellerProgram.Log.Info("Start listening on port " + _port);
                 TcpListener listener = new TcpListener(IPAddress.Any, _port);
                 try
                 {
@@ -219,8 +219,8 @@ namespace Propeller
                 }
                 catch (SocketException e)
                 {
-                    lock (Program.Log)
-                        Program.Log.Error("Cannot bind to port {0}: {1}".Fmt(_port, e.Message));
+                    lock (PropellerProgram.Log)
+                        PropellerProgram.Log.Error("Cannot bind to port {0}: {1}".Fmt(_port, e.Message));
                     _exited.Set();
                     return;
                 }
@@ -236,8 +236,8 @@ namespace Propeller
                 }
                 finally
                 {
-                    lock (Program.Log)
-                        Program.Log.Info("Stop listening on port " + _port);
+                    lock (PropellerProgram.Log)
+                        PropellerProgram.Log.Info("Stop listening on port " + _port);
                     try { listener.Stop(); }
                     catch { }
                     _exited.Set();

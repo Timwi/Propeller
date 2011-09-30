@@ -32,12 +32,12 @@ namespace Propeller
 
         protected override void OnStart(string[] args)
         {
-            Program.Engine.Start();
+            PropellerProgram.Engine.Start();
         }
 
         protected override void OnStop()
         {
-            Program.Engine.Shutdown(false);
+            PropellerProgram.Engine.Shutdown(false);
         }
 
         public void Shutdown()
