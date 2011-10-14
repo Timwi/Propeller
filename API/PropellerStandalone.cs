@@ -60,7 +60,7 @@ namespace RT.Propeller
         public static void Run(IPropellerModule module, PropellerSettings settings = null)
         {
             var logger = new ConsoleLogger();
-            logger.Info("Running a Propeller module in standalone mode.");
+            logger.Info("Running Propeller module {0} in standalone mode.".Fmt(module.GetName()));
             if (settings == null)
                 settings = LoadSettings(logger, true);
             else
