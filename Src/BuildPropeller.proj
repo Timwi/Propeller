@@ -33,7 +33,8 @@
   <!-- Propeller-service-specific stuff -->
   <Target Name="Deploy" DependsOnTargets="BuildRelease">
     <Error Condition="'$(DeployPath)'==''" Text="DeployPath must be specified"/>
-    <Exec Command="C:\tools\stopPropeller.bat" IgnoreExitCode="true"/>
+    <Exec Command="net stop PropellerService" IgnoreExitCode="true"/>
+    <WaitForProcessesToTerminate NameRegex="^Propeller$" Timeout="60"/>
     <MakeDir Directories="$(DeployPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
     <ItemGroup>
       <BuildOutputs Include="$(BuildsPath)\$(ProjectName)\Release-AnyCPU-Raw\*.exe"/>
