@@ -42,7 +42,8 @@ namespace Propeller
         public void Init(HttpServerOptions options, string pluginDir, string tempDir, LoggerBase log)
         {
             _log = log;
-            _server = new HttpServer(options);
+            var resolver = new UrlPathResolver();
+            _server = new HttpServer(options) { Handler = resolver.Handle };
             _dlls = new List<DllInfo>();
 
             addFileSystemWatcher(pluginDir, "*.dll");
@@ -106,8 +107,8 @@ namespace Propeller
                         continue;
                     }
 
-                    if (result != null && result.HandlerHooks != null)
-                        _server.RequestHandlerHooks.AddRange(result.HandlerHooks);
+                    if (result != null && result.UrlPathHooks != null)
+                        resolver.AddRange(result.UrlPathHooks);
 
                     try
                     {

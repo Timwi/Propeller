@@ -66,10 +66,11 @@ namespace RT.Propeller
             else
                 logger.Info("Using custom Propeller settings supplied by the standalone module.");
             logger.ConfigureVerbosity(settings.LogVerbosity);
-            var server = new HttpServer(settings.ServerOptions);
+            var resolver = new UrlPathResolver();
+            var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
             var result = module.Init(PathUtil.AppPath, PathUtil.AppPath, logger);
-            if (result != null && result.HandlerHooks != null)
-                server.RequestHandlerHooks.AddRange(result.HandlerHooks);
+            if (result != null && result.UrlPathHooks != null)
+                resolver.AddRange(result.UrlPathHooks);
             logger.Info(string.Format("Starting server on port {0} (Propeller module in standalone mode)", settings.ServerOptions.Port));
             server.StartListening(true);
         }
