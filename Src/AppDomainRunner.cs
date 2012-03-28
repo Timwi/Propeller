@@ -209,7 +209,7 @@ namespace Propeller
         public void HandleRequest(SocketInformation sckInfo)
         {
             Socket sck = new Socket(sckInfo);
-            _server.HandleRequest(sck, false);
+            _server.HandleRequest(sck);
         }
 
         public HttpServer.Statistics Stats
