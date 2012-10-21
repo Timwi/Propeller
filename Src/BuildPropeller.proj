@@ -34,6 +34,8 @@
   <Target Name="Deploy" DependsOnTargets="BuildRelease">
     <Error Condition="'$(DeployPath)'==''" Text="DeployPath must be specified"/>
     <Exec Command="net stop PropellerService" IgnoreExitCode="true"/>
+    <WaitForProcessesToTerminate NameRegex="^Propeller$" Timeout="60" IgnoreFailure="true"/>
+    <Exec Command="net stop PropellerService" IgnoreExitCode="true"/>
     <WaitForProcessesToTerminate NameRegex="^Propeller$" Timeout="60"/>
     <MakeDir Directories="$(DeployPath)"/>       <!-- a bit of hard-coding below to make this script a lot simpler... -->
     <ItemGroup>
