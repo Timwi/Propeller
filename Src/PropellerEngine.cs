@@ -118,7 +118,7 @@ namespace Propeller
                         PropellerProgram.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
                 if (_currentListeningThread != null)
                     _currentListeningThread.RequestExit();
-                _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port);
+                _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port.Value);
             }
 
             _currentConfig = newConfig;
