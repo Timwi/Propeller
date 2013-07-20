@@ -23,7 +23,7 @@ namespace Propeller
             Log.Info("");
             Log.Info("");
             Log.Info("");
-            Log.Info("Propeller invoked with {0} argument(s): {1}".Fmt(args.Length, args.JoinString("\"", "\"", ", ")));
+            Log.Info("Propeller invoked with {0} argument(s): {1}".Fmt(args.Length, args.JoinString(separator: ", ", prefix: "\"", suffix: "\"")));
 
             if (args.Length == 0)
                 Service.RunAsStandalone(args);
