@@ -15,6 +15,8 @@ namespace RT.PropellerApi
         public string PluginDirectory = "$(AppPath)\\plugins";
         /// <summary>Propeller loads modules from this path. Not applicable to standalone mode.</summary>
         public string PluginDirectoryExpanded { get { return PathUtil.ExpandPath(PluginDirectory); } }
+        /// <summary>Propeller stores temporary files, including the shadow-copied DLLs, in this path. If <c>null,</c> uses <c>Path.GetTempPath()</c>. Not applicable to standalone mode.</summary>
+        public string TempDirectory = null;
         /// <summary>Specifies log verbosity settings. For more details, see <see cref="LoggerBase.ConfigureVerbosity"/>.</summary>
         public string LogVerbosity = "1d0";
     }

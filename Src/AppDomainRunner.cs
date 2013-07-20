@@ -212,11 +212,11 @@ namespace Propeller
             _server.HandleConnection(sck, false);
         }
 
-        public HttpServer.Statistics Stats
+        public int ActiveHandlers
         {
             get
             {
-                return _server.Stats;
+                return _server.Stats.ActiveHandlers;
             }
         }
     }

@@ -92,7 +92,7 @@ namespace Propeller
             var newInactiveDomains = new List<AppDomainInfo>();
             foreach (var entry in _inactiveAppDomains)
             {
-                if (entry.Runner.Stats.ActiveHandlers == 0)
+                if (entry.Runner.ActiveHandlers == 0)
                 {
                     entry.Runner.Shutdown();
                     AppDomain.Unload(entry.AppDomain);
@@ -133,7 +133,8 @@ namespace Propeller
                 PropellerProgram.Log.ConfigureVerbosity(_currentConfig.LogVerbosity);
 
             // Try to clean up old folders we've created before
-            var tempPath = Path.GetTempPath();
+            var tempPath = _currentConfig.TempDirectory ?? Path.GetTempPath();
+            Directory.CreateDirectory(tempPath);
             foreach (var pth in Directory.GetDirectories(tempPath, "propeller-tmp-*"))
             {
                 try { Directory.Delete(pth, true); }
