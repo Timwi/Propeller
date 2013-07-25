@@ -8,15 +8,15 @@ using RT.Util.ExtensionMethods;
 
 namespace Propeller
 {
-    static class PropellerProgram
+    public static class PropellerProgram
     {
-        public static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
-        public static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
-        public static PropellerEngine Engine = new PropellerEngine();
-        public static string PropellerLogFile = PathUtil.AppPathCombine("Propeller.log");
-        public static MulticastLogger Log = new MulticastLogger();
+        internal static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
+        internal static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
+        internal static PropellerEngine Engine = new PropellerEngine();
+        internal static string PropellerLogFile = PathUtil.AppPathCombine("Propeller.log");
+        internal static MulticastLogger Log = new MulticastLogger();
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             Log.Loggers.Add("console", new ConsoleLogger { TimestampInUTC = true });
             Log.Loggers.Add("file", new FileAppendLogger(PropellerLogFile));

@@ -67,7 +67,8 @@ namespace RT.PropellerApi
             logger.ConfigureVerbosity(settings.LogVerbosity);
             var resolver = new UrlPathResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
-            var result = module.Init(PathUtil.AppPath, PathUtil.AppPath, logger);
+            var pretendPluginPath = PathUtil.AppPathCombine(module.GetName() + ".dll");
+            var result = module.Init(pretendPluginPath, pretendPluginPath, logger);
             if (result != null && result.UrlPathHooks != null)
                 resolver.AddRange(result.UrlPathHooks);
             logger.Info(string.Format("Starting server on port {0} (Propeller module in standalone mode)", settings.ServerOptions.Port));
