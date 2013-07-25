@@ -13,12 +13,6 @@ using RT.Util.Threading;
 
 namespace Propeller
 {
-    sealed class AppDomainInfo
-    {
-        public AppDomain AppDomain;
-        public AppDomainRunner Runner;
-    }
-
     sealed class PropellerEngine : PeriodicMultiple
     {
         private AppDomainInfo _activeAppDomain = null;

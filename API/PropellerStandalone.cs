@@ -1,11 +1,10 @@
 ﻿using System;
 using System.IO;
-using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
-namespace RT.Propeller
+namespace RT.PropellerApi
 {
     /// <summary>
     /// Provides methods to run a Propeller module in standalone mode.

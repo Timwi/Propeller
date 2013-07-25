@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
+using RT.Propeller;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
@@ -11,23 +12,6 @@ using RT.Util.ExtensionMethods;
 
 namespace Propeller
 {
-    /// <summary>Contains information about a loaded DLL.</summary>
-    [Serializable]
-    class DllInfo
-    {
-        /// <summary>Reference to the instantiated Propeller module.</summary>
-        public IPropellerModule Module;
-
-        /// <summary>Caches the result of <see cref="IPropellerModule.GetName"/>.</summary>
-        public string ModuleName;
-
-        /// <summary>Path to the original DLL in the plugins folder. We are not supposed to touch the DLL file itself, but we may need to know its path.</summary>
-        public string OrigDllPath;
-
-        /// <summary>Path to the DLL in the temp folder where <see cref="AppDomainRunner"/> has copied it.</summary>
-        public string TempDllPath;
-    }
-
     /// <summary>Contains the code that runs in an AppDomain separate from the main Propeller code (<see cref="PropellerEngine"/>).</summary>
     [Serializable]
     class AppDomainRunner : MarshalByRefObject

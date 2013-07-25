@@ -8,7 +8,7 @@
     <ProjectGuid>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RT.Propeller</RootNamespace>
+    <RootNamespace>RT.PropellerApi</RootNamespace>
     <AssemblyName>PropellerApi</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IPropellerModule.cs" />
     <Compile Include="PropellerApi.cs" />
     <Compile Include="PropellerSettings.cs" />
     <Compile Include="PropellerStandalone.cs" />

@@ -44,7 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AppDomainInfo.cs" />
     <Compile Include="AppDomainRunner.cs" />
+    <Compile Include="DllInfo.cs" />
     <Compile Include="PropellerEngine.cs" />
     <Compile Include="PropellerProgram.cs" />
     <Compile Include="PropellerService.cs">

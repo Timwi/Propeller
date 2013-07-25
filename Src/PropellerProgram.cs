@@ -8,7 +8,7 @@ using RT.Util.ExtensionMethods;
 
 namespace Propeller
 {
-    class PropellerProgram
+    static class PropellerProgram
     {
         public static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
         public static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
