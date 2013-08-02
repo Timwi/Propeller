@@ -28,6 +28,7 @@ namespace RT.PropellerApi
             {
                 if (!SettingsUtil.LoadSettings(out result))
                     throw new Exception(); // will be caught straight away
+                result.SaveQuiet();
             }
             catch
             {

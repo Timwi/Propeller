@@ -153,7 +153,7 @@ namespace Propeller
             AppDomainRunner newRunner = (AppDomainRunner) newAppDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.AppDomainRunner");
 
             lock (PropellerProgram.Log)
-                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log);
+                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log, _currentConfig.HttpAccessLogFile, _currentConfig.HttpAccessLogToConsole, _currentConfig.HttpAccessLogVerbosity);
 
             lock (_lockObject)
             {

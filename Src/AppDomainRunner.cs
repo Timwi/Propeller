@@ -23,11 +23,26 @@ namespace Propeller
         private string _fileChanged = null;
         private LoggerBase _log;
 
-        public void Init(HttpServerOptions options, string pluginDir, string tempDir, LoggerBase log)
+        public void Init(HttpServerOptions options, string pluginDir, string tempDir, LoggerBase log, string logFile, bool logToConsole, string logVerbosity)
         {
             _log = log;
+
             var resolver = new UrlPathResolver();
             _server = new HttpServer(options) { Handler = resolver.Handle };
+
+            if (logFile != null && logToConsole)
+            {
+                var multiLogger = new MulticastLogger();
+                multiLogger.Loggers["file"] = new FileAppendLogger(logFile);
+                multiLogger.Loggers["console"] = new ConsoleLogger();
+                _server.Log = multiLogger;
+            }
+            else if (logFile != null)
+                _server.Log = new FileAppendLogger(logFile);
+            else if (logToConsole)
+                _server.Log = new ConsoleLogger();
+            _server.Log.ConfigureVerbosity(logVerbosity);
+
             _dlls = new List<DllInfo>();
 
             addFileSystemWatcher(pluginDir, "*.dll");
