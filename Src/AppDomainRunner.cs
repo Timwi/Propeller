@@ -33,12 +33,12 @@ namespace Propeller
             if (logFile != null && logToConsole)
             {
                 var multiLogger = new MulticastLogger();
-                multiLogger.Loggers["file"] = new FileAppendLogger(logFile);
+                multiLogger.Loggers["file"] = new FileAppendLogger(logFile) { SharingVioWait = TimeSpan.FromSeconds(2) };
                 multiLogger.Loggers["console"] = new ConsoleLogger();
                 _server.Log = multiLogger;
             }
             else if (logFile != null)
-                _server.Log = new FileAppendLogger(logFile);
+                _server.Log = new FileAppendLogger(logFile) { SharingVioWait = TimeSpan.FromSeconds(2) };
             else if (logToConsole)
                 _server.Log = new ConsoleLogger();
             _server.Log.ConfigureVerbosity(logVerbosity);
