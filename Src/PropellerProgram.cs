@@ -13,13 +13,10 @@ namespace Propeller
         internal static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
         internal static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
         internal static PropellerEngine Engine = new PropellerEngine();
-        internal static string PropellerLogFile = PathUtil.AppPathCombine("Propeller.log");
-        internal static MulticastLogger Log = new MulticastLogger();
+        internal static LoggerBase Log = new ConsoleLogger();
 
         public static void Main(string[] args)
         {
-            Log.Loggers.Add("console", new ConsoleLogger { TimestampInUTC = true });
-            Log.Loggers.Add("file", new FileAppendLogger(PropellerLogFile));
             Log.Info("");
             Log.Info("");
             Log.Info("Propeller invoked with {0} argument(s): {1}".Fmt(args.Length, args.JoinString(separator: ", ", prefix: "\"", suffix: "\"")));

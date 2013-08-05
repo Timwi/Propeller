@@ -53,19 +53,35 @@ namespace RT.PropellerApi
             return result;
         }
 
+        public static LoggerBase GetLogger(PropellerSettings settings = null)
+        {
+            var consoleLogger = new ConsoleLogger();
+            if (settings == null || settings.LogFile == null)
+            {
+                consoleLogger.ConfigureVerbosity(settings.LogVerbosity);
+                return consoleLogger;
+            }
+
+            var logger = new MulticastLogger();
+            logger.Loggers["file"] = new FileAppendLogger(settings.LogFile) { SharingVioWait = TimeSpan.FromSeconds(2) };
+            logger.Loggers["console"] = consoleLogger;
+            logger.ConfigureVerbosity(settings.LogVerbosity);
+            return logger;
+        }
+
         /// <summary>Executes a Propeller module in standalone mode (as opposed to being hosted by the Propeller engine).</summary>
         /// <param name="module">An instance of the module to be executed.</param>
         /// <param name="settings">Custom Propeller settings. Leave unspecified to load settings in exactly the same way
         /// as the Propeller engine would load them had the module been hosted by it.</param>
         public static void Run(IPropellerModule module, PropellerSettings settings = null)
         {
-            var logger = new ConsoleLogger();
-            logger.Info("Running Propeller module {0} in standalone mode.".Fmt(module.GetName()));
+            LoggerBase logger = new ConsoleLogger();
             if (settings == null)
                 settings = LoadSettings(logger, true);
             else
                 logger.Info("Using custom Propeller settings supplied by the standalone module.");
-            logger.ConfigureVerbosity(settings.LogVerbosity);
+            logger = GetLogger(settings);
+            logger.Info("Running Propeller module {0} in standalone mode.".Fmt(module.GetName()));
             var resolver = new UrlPathResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
             var pretendPluginPath = PathUtil.AppPathCombine(module.GetName() + ".dll");

@@ -31,6 +31,9 @@ namespace RT.PropellerApi
         /// <summary>Specifies log verbosity for the HTTP access log. For usage, see <see cref="LoggerBase.ConfigureVerbosity"/>.</summary>
         public string HttpAccessLogVerbosity = "1d0";
 
+        /// <summary>Specifies the path and filename for the Propeller log, or <c>null</c> to keep no log.</summary>
+        public string LogFile = null;
+
         /// <summary>Specifies log verbosity for the Propeller log. For usage, see <see cref="LoggerBase.ConfigureVerbosity"/>.</summary>
         public string LogVerbosity = "1d0";
     }

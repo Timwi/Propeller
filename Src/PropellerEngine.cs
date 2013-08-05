@@ -123,9 +123,6 @@ namespace Propeller
             lock (PropellerProgram.Log)
                 PropellerProgram.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
 
-            lock (PropellerProgram.Log)
-                PropellerProgram.Log.ConfigureVerbosity(_currentConfig.LogVerbosity);
-
             // Try to clean up old folders we've created before
             var tempPath = _currentConfig.TempDirectory ?? Path.GetTempPath();
             Directory.CreateDirectory(tempPath);
@@ -151,6 +148,8 @@ namespace Propeller
                 PrivateBinPath = copyToPath,
             });
             AppDomainRunner newRunner = (AppDomainRunner) newAppDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.AppDomainRunner");
+
+            PropellerProgram.Log = PropellerStandalone.GetLogger(_currentConfig);
 
             lock (PropellerProgram.Log)
                 newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log, _currentConfig.HttpAccessLogFile, _currentConfig.HttpAccessLogToConsole, _currentConfig.HttpAccessLogVerbosity);
