@@ -102,7 +102,7 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        logException(e, moduleName, thrownBy);
+                        PropellerEngine.LogException(_log, e, moduleName, thrownBy);
                         continue;
                     }
 
@@ -117,7 +117,7 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        logException(e, moduleName, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
+                        PropellerEngine.LogException(_log, e, moduleName, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
                         continue;
                     }
 
@@ -133,19 +133,6 @@ namespace Propeller
 
             lock (_log)
                 _log.Info("{0} plugin(s) are active: {1}".Fmt(_dlls.Count, _dlls.Select(dll => dll.ModuleName).JoinString(", ")));
-        }
-
-        private void logException(Exception e, string pluginName, string thrownBy)
-        {
-            lock (_log)
-            {
-                _log.Error(@"Error in plugin ""{0}"": {1} ({2} thrown by {3})".Fmt(pluginName, e.Message, e.GetType().FullName, thrownBy));
-                while (e.InnerException != null)
-                {
-                    e = e.InnerException;
-                    _log.Error(" -- Inner exception: {0} ({1})".Fmt(e.Message, e.GetType().FullName));
-                }
-            }
         }
 
         private void logError(string message)
@@ -190,7 +177,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    logException(e, dll.ModuleName, "MustReinitServer()");
+                    PropellerEngine.LogException(_log, e, dll.ModuleName, "MustReinitServer()");
                 }
             }
             return false;
@@ -201,7 +188,7 @@ namespace Propeller
             foreach (var dll in _dlls.Where(d => d.Module != null))
             {
                 try { dll.Module.Shutdown(); }
-                catch (Exception e) { logException(e, dll.ModuleName, "Shutdown()"); }
+                catch (Exception e) { PropellerEngine.LogException(_log, e, dll.ModuleName, "Shutdown()"); }
             }
         }
 

@@ -51,50 +51,57 @@ namespace Propeller
 
         private void checkAndProcessFileChanges()
         {
-            bool mustReinitServer = false;
-
-            if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
+            try
             {
-                mustReinitServer = true;
-                refreshConfig();
-            }
+                bool mustReinitServer = false;
 
-            if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
-            {
-                try { Directory.CreateDirectory(_currentConfig.PluginDirectoryExpanded); }
-                catch (Exception e)
+                if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
                 {
-                    lock (PropellerProgram.Log)
+                    mustReinitServer = true;
+                    refreshConfig();
+                }
+
+                if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
+                {
+                    try { Directory.CreateDirectory(_currentConfig.PluginDirectoryExpanded); }
+                    catch (Exception e)
                     {
-                        PropellerProgram.Log.Error(e.Message);
-                        PropellerProgram.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
+                        lock (PropellerProgram.Log)
+                        {
+                            PropellerProgram.Log.Error(e.Message);
+                            PropellerProgram.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
+                        }
+                        PropellerProgram.Service.Shutdown();
+                        return;
                     }
-                    PropellerProgram.Service.Shutdown();
-                    return;
                 }
-            }
 
-            // Check whether any of the plugins reports that they need to be reinitialised.
-            if (!mustReinitServer && _activeAppDomain.Runner != null)
-                mustReinitServer = _activeAppDomain.Runner.MustReinitServer();
+                // Check whether any of the plugins reports that they need to be reinitialised.
+                if (!mustReinitServer && _activeAppDomain.Runner != null)
+                    mustReinitServer = _activeAppDomain.Runner.MustReinitServer();
 
-            if (mustReinitServer)
-                reinitServer();
+                if (mustReinitServer)
+                    reinitServer();
 
-            _firstRunEver = false;
+                _firstRunEver = false;
 
-            var newInactiveDomains = new List<AppDomainInfo>();
-            foreach (var entry in _inactiveAppDomains)
-            {
-                if (entry.Runner.ActiveHandlers == 0)
+                var newInactiveDomains = new List<AppDomainInfo>();
+                foreach (var entry in _inactiveAppDomains)
                 {
-                    entry.Runner.Shutdown();
-                    AppDomain.Unload(entry.AppDomain);
+                    if (entry.Runner.ActiveHandlers == 0)
+                    {
+                        entry.Runner.Shutdown();
+                        AppDomain.Unload(entry.AppDomain);
+                    }
+                    else
+                        newInactiveDomains.Add(entry);
                 }
-                else
-                    newInactiveDomains.Add(entry);
+                _inactiveAppDomains = newInactiveDomains;
             }
-            _inactiveAppDomains = newInactiveDomains;
+            catch (Exception e)
+            {
+                LogException(PropellerProgram.Log, e, null, "checkAndProcessFileChanges()");
+            }
         }
 
         private void refreshConfig()
@@ -169,7 +176,7 @@ namespace Propeller
         {
             if (_currentListeningThread != null)
             {
-                _currentListeningThread.RequestExit(); ;
+                _currentListeningThread.RequestExit();
                 if (waitForExit)
                     _currentListeningThread.WaitExited();
             }
@@ -254,6 +261,20 @@ namespace Propeller
                             sck.Close();
                     }
                     catch { }
+                }
+            }
+        }
+
+        public static void LogException(LoggerBase log, Exception e, string pluginName, string thrownBy)
+        {
+            lock (log)
+            {
+                var p = pluginName == null ? "Propeller" : @"plugin ""{0}""".Fmt(pluginName);
+                log.Error(@"Error in {0}: {1} ({2} thrown by {3})".Fmt(p, e.Message, e.GetType().FullName, thrownBy));
+                while (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                    log.Error(" -- Inner exception: {0} ({1})".Fmt(e.Message, e.GetType().FullName));
                 }
             }
         }
