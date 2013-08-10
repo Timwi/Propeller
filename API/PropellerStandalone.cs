@@ -6,17 +6,16 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.PropellerApi
 {
-    /// <summary>
-    /// Provides methods to run a Propeller module in standalone mode.
-    /// </summary>
+    /// <summary>Provides methods to run a Propeller module in standalone mode.</summary>
     public static class PropellerStandalone
     {
         /// <summary>
-        /// Loads Propeller settings from the appropriate location. Using this method ensures that settings are loaded
-        /// in exactly the same way and from the same place as the Propeller engine would load them.
-        /// </summary>
-        /// <param name="log">Information about how the settings were loaded is logged here. Must not be null.</param>
-        /// <param name="firstRunEver">Adjusts the log messages for improved human readability.</param>
+        ///     Loads Propeller settings from the appropriate location. Using this method ensures that settings are loaded in
+        ///     exactly the same way and from the same place as the Propeller engine would load them.</summary>
+        /// <param name="log">
+        ///     Information about how the settings were loaded is logged here. Must not be null.</param>
+        /// <param name="firstRunEver">
+        ///     Adjusts the log messages for improved human readability.</param>
         public static PropellerSettings LoadSettings(LoggerBase log, bool firstRunEver)
         {
             var configPath = SettingsUtil.GetAttribute<PropellerSettings>().GetFileName();
@@ -53,6 +52,9 @@ namespace RT.PropellerApi
             return result;
         }
 
+        /// <summary>
+        ///     Returns a logger in accordance with the specified <paramref name="settings"/>, or a <see
+        ///     cref="ConsoleLogger"/> if <paramref name="settings"/> is <c>null</c>.</summary>
         public static LoggerBase GetLogger(PropellerSettings settings = null)
         {
             var consoleLogger = new ConsoleLogger();
@@ -69,10 +71,13 @@ namespace RT.PropellerApi
             return logger;
         }
 
-        /// <summary>Executes a Propeller module in standalone mode (as opposed to being hosted by the Propeller engine).</summary>
-        /// <param name="module">An instance of the module to be executed.</param>
-        /// <param name="settings">Custom Propeller settings. Leave unspecified to load settings in exactly the same way
-        /// as the Propeller engine would load them had the module been hosted by it.</param>
+        /// <summary>
+        ///     Executes a Propeller module in standalone mode (as opposed to being hosted by the Propeller engine).</summary>
+        /// <param name="module">
+        ///     An instance of the module to be executed.</param>
+        /// <param name="settings">
+        ///     Custom Propeller settings. Leave unspecified to load settings in exactly the same way as the Propeller engine
+        ///     would load them had the module been hosted by it.</param>
         public static void Run(IPropellerModule module, PropellerSettings settings = null)
         {
             LoggerBase logger = new ConsoleLogger();
