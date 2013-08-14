@@ -23,12 +23,24 @@ namespace Propeller
         private string _fileChanged = null;
         private LoggerBase _log;
 
-        public void Init(HttpServerOptions options, string pluginDir, string tempDir, LoggerBase log, string logFile, bool logToConsole, string logVerbosity)
+        public bool Init(HttpServerOptions options, string pluginDir, string tempDir, LoggerBase log, string logFile, bool logToConsole, string logVerbosity)
         {
             _log = log;
 
             var resolver = new UrlPathResolver();
-            _server = new HttpServer(options) { Handler = resolver.Handle };
+            _server = new HttpServer(options)
+            {
+                Handler = resolver.Handle,
+                ErrorHandler = (req, e) =>
+                {
+                    PropellerStandalone.LogException(_log, e, null, "a handler");
+                    return null;
+                },
+                ResponseExceptionHandler = (req, e, resp) =>
+                {
+                    PropellerStandalone.LogException(_log, e, null, "a handler's response object");
+                }
+            };
 
             if (logFile != null && logToConsole)
             {
@@ -65,19 +77,29 @@ namespace Propeller
                 catch (Exception e)
                 {
                     lock (_log)
-                        _log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2} - Ignoring plugin.".Fmt(origDllPath, tempDllPath, e.Message));
-                    continue;
+                        _log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2}".Fmt(origDllPath, tempDllPath, e.Message));
+                    return false;
                 }
 
                 if (!File.Exists(tempDllPath))
                 {
                     lock (_log)
-                        _log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2} - Ignoring plugin.".Fmt(origDllPath, tempDllPath, "Although the copy operation succeeded, the target file doesn't exist."));
-                    continue;
+                        _log.Error(@"Unable to copy file ""{0}"" to ""{1}"": {2}".Fmt(origDllPath, tempDllPath, "Although the copy operation succeeded, the target file doesn't exist."));
+                    return false;
+                }
+
+                Assembly assembly;
+                try
+                {
+                    assembly = Assembly.LoadFile(tempDllPath);
+                }
+                catch (Exception e)
+                {
+                    PropellerStandalone.LogException(_log, e, null, tempDllPath);
+                    return false;
                 }
 
                 IPropellerModule module = null;
-                Assembly assembly = Assembly.LoadFile(tempDllPath);
                 foreach (var type in assembly.GetExportedTypes())
                 {
                     if (!typeof(IPropellerModule).IsAssignableFrom(type))
@@ -99,15 +121,25 @@ namespace Propeller
                         moduleName = module.GetName();
                         thrownBy = "Init()";
                         result = module.Init(origDllPath, tempDllPath, log);
+                        if (result == null)
+                        {
+                            log.Error(@"The plugin ""{0}""'s Init() method returned null.".Fmt(moduleName));
+                            return false;
+                        }
                     }
                     catch (Exception e)
                     {
-                        PropellerEngine.LogException(_log, e, moduleName, thrownBy);
-                        continue;
+                        PropellerStandalone.LogException(_log, e, moduleName, thrownBy);
+                        return false;
                     }
 
-                    if (result != null && result.UrlPathHooks != null)
+                    if (result.UrlPathHooks != null)
                         resolver.AddRange(result.UrlPathHooks);
+                    else
+                    {
+                        lock (log)
+                            log.Warn(@"The module ""{0}"" returned null UrlPathHooks. It will not be accessible through any URL.".Fmt(moduleName));
+                    }
 
                     try
                     {
@@ -117,8 +149,8 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        PropellerEngine.LogException(_log, e, moduleName, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
-                        continue;
+                        PropellerStandalone.LogException(_log, e, moduleName, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
+                        return false;
                     }
 
                     _dlls.Add(new DllInfo
@@ -133,6 +165,7 @@ namespace Propeller
 
             lock (_log)
                 _log.Info("{0} plugin(s) are active: {1}".Fmt(_dlls.Count, _dlls.Select(dll => dll.ModuleName).JoinString(", ")));
+            return true;
         }
 
         private void logError(string message)
@@ -166,6 +199,7 @@ namespace Propeller
             {
                 lock (_log)
                     _log.Info(@"Detected {0} changes to the filesystem, including ""{1}"".".Fmt(_filesChangedCount, _fileChanged));
+                _filesChangedCount = 0;
                 return true;
             }
             foreach (var dll in _dlls.Where(d => d.Module != null))
@@ -177,7 +211,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    PropellerEngine.LogException(_log, e, dll.ModuleName, "MustReinitServer()");
+                    PropellerStandalone.LogException(_log, e, dll.ModuleName, "MustReinitServer()");
                 }
             }
             return false;
@@ -188,7 +222,7 @@ namespace Propeller
             foreach (var dll in _dlls.Where(d => d.Module != null))
             {
                 try { dll.Module.Shutdown(); }
-                catch (Exception e) { PropellerEngine.LogException(_log, e, dll.ModuleName, "Shutdown()"); }
+                catch (Exception e) { PropellerStandalone.LogException(_log, e, dll.ModuleName, "Shutdown()"); }
             }
         }
 
@@ -204,6 +238,11 @@ namespace Propeller
             {
                 return _server.Stats.ActiveHandlers;
             }
+        }
+
+        public void ResetFileSystemWatchers()
+        {
+            _filesChangedCount = 0;
         }
     }
 }

@@ -71,6 +71,27 @@ namespace RT.PropellerApi
             return logger;
         }
 
+        /// <summary>Logs an exception.</summary>
+        /// <param name="log">Logger to log the exception to.</param>
+        /// <param name="e">The exception to log.</param>
+        /// <param name="pluginName">The name of the plugin that threw the exception.</param>
+        /// <param name="thrownBy">The name of a method, property or object that is responsible for the exception.</param>
+        public static void LogException(LoggerBase log, Exception e, string pluginName, string thrownBy)
+        {
+            lock (log)
+            {
+                var p = pluginName == null ? "Propeller" : @"plugin ""{0}""".Fmt(pluginName);
+                log.Error(@"Error in {0}: {1} ({2} thrown by {3})".Fmt(p, e.Message, e.GetType().FullName, thrownBy));
+                log.Error(e.StackTrace);
+                while (e.InnerException != null)
+                {
+                    e = e.InnerException;
+                    log.Error(" -- Inner exception: {0} ({1})".Fmt(e.Message, e.GetType().FullName));
+                    log.Error(e.StackTrace);
+                }
+            }
+        }
+
         /// <summary>
         ///     Executes a Propeller module in standalone mode (as opposed to being hosted by the Propeller engine).</summary>
         /// <param name="module">
@@ -90,9 +111,28 @@ namespace RT.PropellerApi
             var resolver = new UrlPathResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
             var pretendPluginPath = PathUtil.AppPathCombine(module.GetName() + ".dll");
-            var result = module.Init(pretendPluginPath, pretendPluginPath, logger);
-            if (result != null && result.UrlPathHooks != null)
+
+            PropellerModuleInitResult result;
+            try
+            {
+                result = module.Init(pretendPluginPath, pretendPluginPath, logger);
+            }
+            catch (Exception e)
+            {
+                LogException(logger, e, module.GetName(), "Init()");
+                return;
+            }
+            if (result == null)
+            {
+                logger.Error("The module’s Init() method returned null.");
+                return;
+            }
+
+            if (result.UrlPathHooks != null)
                 resolver.AddRange(result.UrlPathHooks);
+            else
+                logger.Warn("The module returned null UrlPathHooks. It will not be accessible through any URL.");
+
             logger.Info(string.Format("Starting server on port {0} (Propeller module in standalone mode)", settings.ServerOptions.Port));
             server.StartListening(true);
         }

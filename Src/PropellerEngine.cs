@@ -54,11 +54,20 @@ namespace Propeller
             try
             {
                 bool mustReinitServer = false;
+                bool needNewListener = false;
+                var oldPort = _currentConfig.NullOr(cfg => cfg.ServerOptions.Port);
 
                 if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
                 {
                     mustReinitServer = true;
-                    refreshConfig();
+
+                    // Read configuration file
+                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
+                    _currentConfig = PropellerStandalone.LoadSettings(PropellerProgram.Log, _firstRunEver);
+                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc; // a new file may have been created
+
+                    // If port number is different from previous port number, create a new listening thread and kill the old one
+                    needNewListener = (_firstRunEver || _currentConfig.ServerOptions.Port != oldPort);
                 }
 
                 if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
@@ -71,7 +80,6 @@ namespace Propeller
                             PropellerProgram.Log.Error(e.Message);
                             PropellerProgram.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
                         }
-                        PropellerProgram.Service.Shutdown();
                         return;
                     }
                 }
@@ -81,7 +89,24 @@ namespace Propeller
                     mustReinitServer = _activeAppDomain.Runner.MustReinitServer();
 
                 if (mustReinitServer)
-                    reinitServer();
+                {
+                    var result = reinitServer();
+                    if (!result)
+                    {
+                        lock (PropellerProgram.Log)
+                            PropellerProgram.Log.Error("Server initialization failed.");
+                        return;
+                    }
+                    if (needNewListener)
+                    {
+                        if (!_firstRunEver)
+                            lock (PropellerProgram.Log)
+                                PropellerProgram.Log.Info("Switching from port {0} to port {1}.".Fmt(oldPort, _currentConfig.ServerOptions.Port));
+                        if (_currentListeningThread != null)
+                            _currentListeningThread.RequestExit();
+                        _currentListeningThread = new ListeningThread(this, _currentConfig.ServerOptions.Port.Value);
+                    }
+                }
 
                 _firstRunEver = false;
 
@@ -100,32 +125,18 @@ namespace Propeller
             }
             catch (Exception e)
             {
-                LogException(PropellerProgram.Log, e, null, "checkAndProcessFileChanges()");
+                PropellerStandalone.LogException(PropellerProgram.Log, e, null, "checkAndProcessFileChanges()");
             }
-        }
-
-        private void refreshConfig()
-        {
-            // Read configuration file
-            _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
-            var newConfig = PropellerStandalone.LoadSettings(PropellerProgram.Log, _firstRunEver);
-            _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc; // a new file may have been created
-
-            // If port number is different from previous port number, create a new listening thread and kill the old one
-            if (_firstRunEver || _currentConfig == null || (newConfig.ServerOptions.Port != _currentConfig.ServerOptions.Port))
+            finally
             {
-                if (!_firstRunEver)
-                    lock (PropellerProgram.Log)
-                        PropellerProgram.Log.Info("Switching from port {0} to port {1}.".Fmt(_currentConfig.ServerOptions.Port, newConfig.ServerOptions.Port));
-                if (_currentListeningThread != null)
-                    _currentListeningThread.RequestExit();
-                _currentListeningThread = new ListeningThread(this, newConfig.ServerOptions.Port.Value);
+                // A module may rewrite its own config file during initialisation. If initialisation failed, the FileSystemWatcher would
+                // indicate this again as a config file change and immediately retrigger reinitialization. Avoid that.
+                if (_activeAppDomain != null)
+                    _activeAppDomain.Runner.ResetFileSystemWatchers();
             }
-
-            _currentConfig = newConfig;
         }
 
-        private void reinitServer()
+        private bool reinitServer()
         {
             lock (PropellerProgram.Log)
                 PropellerProgram.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
@@ -159,8 +170,27 @@ namespace Propeller
             PropellerProgram.Log = PropellerStandalone.GetLogger(_currentConfig);
 
             lock (PropellerProgram.Log)
-                newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log, _currentConfig.HttpAccessLogFile, _currentConfig.HttpAccessLogToConsole, _currentConfig.HttpAccessLogVerbosity);
+            {
+                try
+                {
+                    var result = newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log, _currentConfig.HttpAccessLogFile, _currentConfig.HttpAccessLogToConsole, _currentConfig.HttpAccessLogVerbosity);
 
+                    // If Init() returns false, then it has already logged an exception.
+                    if (!result)
+                    {
+                        AppDomain.Unload(newAppDomain);
+                        return false;
+                    }
+                }
+                catch (Exception e)
+                {
+                    PropellerStandalone.LogException(PropellerProgram.Log, e, null, "AppDomainRunner.Init()");
+                    AppDomain.Unload(newAppDomain);
+                    return false;
+                }
+            }
+
+            // Initialization of the new AppDomain was successful, so switch over!
             lock (_lockObject)
             {
                 if (_activeAppDomain != null)
@@ -170,6 +200,7 @@ namespace Propeller
 
             lock (PropellerProgram.Log)
                 PropellerProgram.Log.Info("Propeller initialisation successful.");
+            return true;
         }
 
         public override bool Shutdown(bool waitForExit)
@@ -261,20 +292,6 @@ namespace Propeller
                             sck.Close();
                     }
                     catch { }
-                }
-            }
-        }
-
-        public static void LogException(LoggerBase log, Exception e, string pluginName, string thrownBy)
-        {
-            lock (log)
-            {
-                var p = pluginName == null ? "Propeller" : @"plugin ""{0}""".Fmt(pluginName);
-                log.Error(@"Error in {0}: {1} ({2} thrown by {3})".Fmt(p, e.Message, e.GetType().FullName, thrownBy));
-                while (e.InnerException != null)
-                {
-                    e = e.InnerException;
-                    log.Error(" -- Inner exception: {0} ({1})".Fmt(e.Message, e.GetType().FullName));
                 }
             }
         }
