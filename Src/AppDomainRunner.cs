@@ -226,10 +226,9 @@ namespace Propeller
             }
         }
 
-        public void HandleRequest(SocketInformation sckInfo)
+        public void HandleRequest(SocketInformation sckInfo, bool secure = false)
         {
-            Socket sck = new Socket(sckInfo);
-            _server.HandleConnection(sck, false);
+            _server.HandleConnection(new Socket(sckInfo), secure);
         }
 
         public int ActiveHandlers

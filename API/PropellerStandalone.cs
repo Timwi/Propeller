@@ -29,10 +29,10 @@ namespace RT.PropellerApi
                     throw new Exception(); // will be caught straight away
                 result.SaveQuiet();
             }
-            catch
+            catch (Exception e)
             {
                 lock (log)
-                    log.Warn("Config file could not be loaded; using default config.");
+                    log.Warn("Config file could not be loaded: {0}. Using default config.".Fmt(e.Message));
                 result = new PropellerSettings();
                 if (!File.Exists(configPath))
                 {
@@ -42,10 +42,10 @@ namespace RT.PropellerApi
                         lock (log)
                             log.Info("Default config saved to {0}.".Fmt(configPath));
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
                         lock (log)
-                            log.Warn("Attempt to save default config to {0} failed: {1}".Fmt(configPath, e.Message));
+                            log.Warn("Attempt to save default config to {0} failed: {1}".Fmt(configPath, ex.Message));
                     }
                 }
             }

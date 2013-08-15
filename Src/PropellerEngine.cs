@@ -20,6 +20,7 @@ namespace Propeller
         private int _appDomainCount = 0;
         private object _lockObject = new object();
         private ListeningThread _currentListeningThread = null;
+        private ListeningThread _currentSecureListeningThread = null;
         private PropellerSettings _currentConfig = null;
         private bool _firstRunEver = true;
         private DateTime _configFileChangeTime = DateTime.MinValue;
@@ -55,19 +56,29 @@ namespace Propeller
             {
                 bool mustReinitServer = false;
                 bool needNewListener = false;
+                bool needNewSecureListener = false;
                 var oldPort = _currentConfig.NullOr(cfg => cfg.ServerOptions.Port);
+                var oldSecurePort = _currentConfig.NullOr(cfg => cfg.ServerOptions.SecurePort);
 
                 if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
                 {
                     mustReinitServer = true;
 
                     // Read configuration file
-                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
                     _currentConfig = PropellerStandalone.LoadSettings(PropellerProgram.Log, _firstRunEver);
-                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc; // a new file may have been created
+                    // Determine the file date/time afterwards because a new file may have been created
+                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
+
+                    if (_currentConfig.ServerOptions.SecurePort != null && (_currentConfig.ServerOptions.CertificatePath == null || !File.Exists(_currentConfig.ServerOptions.CertificatePath)))
+                    {
+                        lock (PropellerProgram.Log)
+                            PropellerProgram.Log.Error("Cannot use HTTPS without a certificate. Set CertificatePath in the configuration to the path and filename of a valid X509 certificate.");
+                        _currentConfig.ServerOptions.SecurePort = null;
+                    }
 
                     // If port number is different from previous port number, create a new listening thread and kill the old one
-                    needNewListener = (_firstRunEver || _currentConfig.ServerOptions.Port != oldPort);
+                    needNewListener = _firstRunEver ? (_currentConfig.ServerOptions.Port != null) : (_currentConfig.ServerOptions.Port != oldPort);
+                    needNewSecureListener = _firstRunEver ? (_currentConfig.ServerOptions.SecurePort != null) : (_currentConfig.ServerOptions.SecurePort != oldSecurePort);
                 }
 
                 if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
@@ -97,15 +108,11 @@ namespace Propeller
                             PropellerProgram.Log.Error("Server initialization failed.");
                         return;
                     }
+
                     if (needNewListener)
-                    {
-                        if (!_firstRunEver)
-                            lock (PropellerProgram.Log)
-                                PropellerProgram.Log.Info("Switching from port {0} to port {1}.".Fmt(oldPort, _currentConfig.ServerOptions.Port));
-                        if (_currentListeningThread != null)
-                            _currentListeningThread.RequestExit();
-                        _currentListeningThread = new ListeningThread(this, _currentConfig.ServerOptions.Port.Value);
-                    }
+                        _currentListeningThread = switchListener(this, "HTTP", _firstRunEver, oldPort, _currentConfig.ServerOptions.Port, _currentListeningThread, false);
+                    if (needNewSecureListener)
+                        _currentSecureListeningThread = switchListener(this, "HTTPS", _firstRunEver, oldSecurePort, _currentConfig.ServerOptions.SecurePort, _currentSecureListeningThread, true);
                 }
 
                 _firstRunEver = false;
@@ -134,6 +141,22 @@ namespace Propeller
                 if (_activeAppDomain != null)
                     _activeAppDomain.Runner.ResetFileSystemWatchers();
             }
+        }
+
+        private static ListeningThread switchListener(PropellerEngine super, string protocol, bool firstRunEver, int? oldPort, int? newPort, ListeningThread prevListeningThread, bool secure)
+        {
+            lock (PropellerProgram.Log)
+            {
+                if (firstRunEver || oldPort == null)
+                    PropellerProgram.Log.Info("Enabling {1} on port {0}.".Fmt(newPort, protocol));
+                else if (newPort != null)
+                    PropellerProgram.Log.Info("Switching {2} from port {0} to port {1}.".Fmt(oldPort, newPort, protocol));
+                else if (newPort == null)
+                    PropellerProgram.Log.Info("Disabling {1} on port {0}.".Fmt(oldPort, protocol));
+            }
+            if (prevListeningThread != null)
+                prevListeningThread.RequestExit();
+            return newPort.NullOr(port => new ListeningThread(super, port, secure));
         }
 
         private bool reinitServer()
@@ -220,13 +243,15 @@ namespace Propeller
             private Thread _listeningThread;
             private PropellerEngine _super;
             private int _port;
+            private bool _secure;
             private CancellationTokenSource _cancel = new CancellationTokenSource();
             private ManualResetEventSlim _exited = new ManualResetEventSlim();
 
-            public ListeningThread(PropellerEngine super, int port)
+            public ListeningThread(PropellerEngine super, int port, bool secure)
             {
                 _super = super;
                 _port = port;
+                _secure = secure;
                 _listeningThread = new Thread(listeningThreadFunction);
                 _listeningThread.Start();
             }
@@ -243,8 +268,6 @@ namespace Propeller
 
             private void listeningThreadFunction()
             {
-                lock (PropellerProgram.Log)
-                    PropellerProgram.Log.Info("Start listening on port " + _port);
                 TcpListener listener = new TcpListener(IPAddress.Any, _port);
                 try
                 {
@@ -287,11 +310,14 @@ namespace Propeller
                     {
                         if (_super._activeAppDomain.Runner != null)
                             // This creates a new thread for handling the connection and returns pretty immediately.
-                            _super._activeAppDomain.Runner.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id));
+                            _super._activeAppDomain.Runner.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id), _secure);
                         else
                             sck.Close();
                     }
-                    catch { }
+                    catch (Exception e)
+                    {
+                        PropellerStandalone.LogException(PropellerProgram.Log, e, null, "HandleRequest()");
+                    }
                 }
             }
         }
