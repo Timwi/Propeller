@@ -27,18 +27,18 @@ namespace Propeller
         {
             _log = log;
 
-            var resolver = new UrlPathResolver();
+            var resolver = new UrlResolver();
             _server = new HttpServer(options)
             {
                 Handler = resolver.Handle,
                 ErrorHandler = (req, e) =>
                 {
-                    PropellerStandalone.LogException(_log, e, null, "a handler");
+                    PropellerStandalone.LogException(_log, e, "a handler");
                     return null;
                 },
                 ResponseExceptionHandler = (req, e, resp) =>
                 {
-                    PropellerStandalone.LogException(_log, e, null, "a handler's response object");
+                    PropellerStandalone.LogException(_log, e, "a handler’s response object");
                 }
             };
 
@@ -95,7 +95,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    PropellerStandalone.LogException(_log, e, null, tempDllPath);
+                    PropellerStandalone.LogException(_log, e, "module “{0}”".Fmt(origDllPath), tempDllPath);
                     return false;
                 }
 
@@ -129,12 +129,12 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        PropellerStandalone.LogException(_log, e, moduleName, thrownBy);
+                        PropellerStandalone.LogException(_log, e, "the plugin “{0}”".Fmt(moduleName), thrownBy);
                         return false;
                     }
 
-                    if (result.UrlPathHooks != null)
-                        resolver.AddRange(result.UrlPathHooks);
+                    if (result.UrlMappings != null)
+                        resolver.AddRange(result.UrlMappings);
                     else
                     {
                         lock (log)
@@ -149,7 +149,7 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        PropellerStandalone.LogException(_log, e, moduleName, "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
+                        PropellerStandalone.LogException(_log, e, "the plugin “{0}”".Fmt(moduleName), "FileSystemWatcher on FileFiltersToBeMonitoredForChanges");
                         return false;
                     }
 
@@ -211,7 +211,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    PropellerStandalone.LogException(_log, e, dll.ModuleName, "MustReinitServer()");
+                    PropellerStandalone.LogException(_log, e, "the plugin “{0}”".Fmt(dll.ModuleName), "MustReinitServer()");
                 }
             }
             return false;
@@ -222,7 +222,7 @@ namespace Propeller
             foreach (var dll in _dlls.Where(d => d.Module != null))
             {
                 try { dll.Module.Shutdown(); }
-                catch (Exception e) { PropellerStandalone.LogException(_log, e, dll.ModuleName, "Shutdown()"); }
+                catch (Exception e) { PropellerStandalone.LogException(_log, e, "the plugin “{0}”".Fmt(dll.ModuleName), "Shutdown()"); }
             }
         }
 

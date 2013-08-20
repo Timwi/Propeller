@@ -74,14 +74,13 @@ namespace RT.PropellerApi
         /// <summary>Logs an exception.</summary>
         /// <param name="log">Logger to log the exception to.</param>
         /// <param name="e">The exception to log.</param>
-        /// <param name="pluginName">The name of the plugin that threw the exception.</param>
+        /// <param name="source">The source of the exception, e.g. <c>"Propeller"</c>, <c>"a handler"</c>, <c>"the plugin “{0}”".Fmt(pluginName)</c>.</param>
         /// <param name="thrownBy">The name of a method, property or object that is responsible for the exception.</param>
-        public static void LogException(LoggerBase log, Exception e, string pluginName, string thrownBy)
+        public static void LogException(LoggerBase log, Exception e, string source, string thrownBy = null)
         {
             lock (log)
             {
-                var p = pluginName == null ? "Propeller" : @"plugin ""{0}""".Fmt(pluginName);
-                log.Error(@"Error in {0}: {1} ({2} thrown by {3})".Fmt(p, e.Message, e.GetType().FullName, thrownBy));
+                log.Error(@"Error in {0}: {1} ({2}{3})".Fmt(source, e.Message, e.GetType().FullName, thrownBy.NullOr(tb => " thrown by " + tb)));
                 log.Error(e.StackTrace);
                 while (e.InnerException != null)
                 {
@@ -108,7 +107,7 @@ namespace RT.PropellerApi
                 logger.Info("Using custom Propeller settings supplied by the standalone module.");
             logger = GetLogger(settings);
             logger.Info("Running Propeller module {0} in standalone mode.".Fmt(module.GetName()));
-            var resolver = new UrlPathResolver();
+            var resolver = new UrlResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
             var pretendPluginPath = PathUtil.AppPathCombine(module.GetName() + ".dll");
 
@@ -119,7 +118,7 @@ namespace RT.PropellerApi
             }
             catch (Exception e)
             {
-                LogException(logger, e, module.GetName(), "Init()");
+                LogException(logger, e, "the plugin “{0}”".Fmt(module.GetName()), "Init()");
                 return;
             }
             if (result == null)
@@ -128,8 +127,8 @@ namespace RT.PropellerApi
                 return;
             }
 
-            if (result.UrlPathHooks != null)
-                resolver.AddRange(result.UrlPathHooks);
+            if (result.UrlMappings != null)
+                resolver.AddRange(result.UrlMappings);
             else
                 logger.Warn("The module returned null UrlPathHooks. It will not be accessible through any URL.");
 

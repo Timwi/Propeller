@@ -106,6 +106,8 @@ namespace Propeller
                     {
                         lock (PropellerProgram.Log)
                             PropellerProgram.Log.Error("Server initialization failed.");
+                        if (_firstRunEver)
+                            throw new PropellerInitializationFailedException();
                         return;
                     }
 
@@ -130,9 +132,13 @@ namespace Propeller
                 }
                 _inactiveAppDomains = newInactiveDomains;
             }
+            catch (PropellerInitializationFailedException)
+            {
+                throw;
+            }
             catch (Exception e)
             {
-                PropellerStandalone.LogException(PropellerProgram.Log, e, null, "checkAndProcessFileChanges()");
+                PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "checkAndProcessFileChanges()");
             }
             finally
             {
@@ -207,7 +213,7 @@ namespace Propeller
                 }
                 catch (Exception e)
                 {
-                    PropellerStandalone.LogException(PropellerProgram.Log, e, null, "AppDomainRunner.Init()");
+                    PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "AppDomainRunner.Init()");
                     AppDomain.Unload(newAppDomain);
                     return false;
                 }
@@ -316,7 +322,7 @@ namespace Propeller
                     }
                     catch (Exception e)
                     {
-                        PropellerStandalone.LogException(PropellerProgram.Log, e, null, "HandleRequest()");
+                        PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "HandleRequest()");
                     }
                 }
             }
