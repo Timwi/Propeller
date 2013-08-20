@@ -134,7 +134,11 @@ namespace Propeller
                     }
 
                     if (result.UrlMappings != null)
+                    {
                         resolver.AddRange(result.UrlMappings);
+                        lock (log)
+                            log.Info(@"Module ""{0}"" URLs: {1}".Fmt(moduleName, result.UrlMappings.JoinString("; ")));
+                    }
                     else
                     {
                         lock (log)
