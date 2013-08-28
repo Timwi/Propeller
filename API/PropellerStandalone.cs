@@ -132,7 +132,10 @@ namespace RT.PropellerApi
             else
                 logger.Warn("The module returned null UrlPathHooks. It will not be accessible through any URL.");
 
-            logger.Info("Starting server on port {0} (Propeller module in standalone mode)".Fmt(settings.ServerOptions.Port));
+            if (settings.ServerOptions.Port != null)
+                logger.Info("Starting server on port {0} (HTTP).".Fmt(settings.ServerOptions.Port));
+            if (settings.ServerOptions.SecurePort != null)
+                logger.Info("Starting server on port {0} (HTTPS).".Fmt(settings.ServerOptions.SecurePort));
             logger.Info("Module URLs: " + result.UrlMappings.JoinString("; "));
             server.StartListening(true);
         }
