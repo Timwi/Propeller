@@ -44,10 +44,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IPropellerModule.cs" />
-    <Compile Include="PropellerModuleInitResult.cs" />
+    <Compile Include="ISettingsSaver.cs" />
     <Compile Include="PropellerSettings.cs" />
-    <Compile Include="PropellerStandalone.cs" />
+    <Compile Include="PropellerUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsSaver.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">

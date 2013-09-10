@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,23 +8,220 @@ using System.Net.Sockets;
 using System.Threading;
 using RT.Propeller;
 using RT.PropellerApi;
+using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 using RT.Util.Threading;
 
-namespace Propeller
+namespace RT.Propeller
 {
     sealed class PropellerEngine : PeriodicMultiple
     {
-        private AppDomainInfo _activeAppDomain = null;
-        private List<AppDomainInfo> _inactiveAppDomains = new List<AppDomainInfo>();
-        private int _appDomainCount = 0;
+        public static int AppDomainCount = 0;    // only used to give each AppDomain a unique name
+
+        public PropellerSettings CurrentSettings { get; private set; }
+
         private object _lockObject = new object();
-        private ListeningThread _currentListeningThread = null;
-        private ListeningThread _currentSecureListeningThread = null;
-        private PropellerSettings _currentConfig = null;
-        private bool _firstRunEver = true;
-        private DateTime _configFileChangeTime = DateTime.MinValue;
+        private string _settingsPath;
+        private bool _settingsSavedByModule = false;
+        private DateTime _settingsLastChangedTime = DateTime.MinValue;
+        private HttpServer _server;
+        private LoggerBase _log;
+        private UrlResolver _resolver;
+        private HashSet<AppDomainInfo> _activeAppDomains = new HashSet<AppDomainInfo>();
+        private HashSet<AppDomainInfo> _inactiveAppDomains = new HashSet<AppDomainInfo>();
+
+        private bool reinitialize()
+        {
+            // If we are already initialized and the settings file hasn’t changed, we don’t need to do anything.
+            var firstRunEver = _server == null;
+            if (_server != null && File.GetLastWriteTimeUtc(_settingsPath) <= _settingsLastChangedTime)
+                return false;
+
+            // This may load *and re-write* the settings file...
+            var newSettings = PropellerUtil.LoadSettings(_settingsPath, firstRunEver ? new ConsoleLogger() : _log, firstRunEver);
+            // ... so remember the file date/time stamp *after* the writing
+            _settingsLastChangedTime = File.GetLastWriteTimeUtc(_settingsPath);
+
+            _log = PropellerUtil.GetLogger(newSettings);
+            _log.Info(firstRunEver ? "Initializing Propeller" : "Reinitializing Propeller");
+
+            // If either port number or the bind-to address have changed, stop and restart the server’s listener.
+            var startListening = false;
+            if (_server == null || CurrentSettings == null ||
+                CurrentSettings.ServerOptions.Port != newSettings.ServerOptions.Port ||
+                CurrentSettings.ServerOptions.SecurePort != newSettings.ServerOptions.SecurePort ||
+                CurrentSettings.ServerOptions.BindAddress != newSettings.ServerOptions.BindAddress)
+            {
+                foreach (var secure in new[] { false, true })
+                {
+                    var oldPort = CurrentSettings.NullOr(cs => secure ? cs.ServerOptions.SecurePort : cs.ServerOptions.Port);
+                    var newPort = secure ? newSettings.ServerOptions.SecurePort : newSettings.ServerOptions.Port;
+                    var protocol = secure ? "HTTPS" : "HTTP";
+                    if (oldPort == null && newPort == null)
+                        continue;
+                    else if (oldPort == null)
+                        _log.Info("Enabling {1} on port {0}.".Fmt(newPort, protocol));
+                    else if (newPort == null)
+                        _log.Info("Disabling {1} on port {0}.".Fmt(oldPort, protocol));
+                    else if (oldPort != newPort)
+                        _log.Info("Switching {2} from port {0} to port {1}.".Fmt(oldPort, newPort, protocol));
+                }
+
+                if (_server == null)
+                    _server = new HttpServer
+                    {
+                        Options = newSettings.ServerOptions,
+                        ErrorHandler = errorHandler,
+                        ResponseExceptionHandler = responseExceptionHandler
+                    };
+                else
+                    _server.StopListening();
+                startListening = true;
+            }
+
+            CurrentSettings = newSettings;
+
+            // Create a new instance of all the modules
+            var newAppDomains = new HashSet<AppDomainInfo>();
+            foreach (var module in newSettings.Modules)
+            {
+                _log.Info("Initializing module: " + module.ModuleName);
+                var inf = new AppDomainInfo(_log, newSettings, module, new SettingsSaver(s =>
+                {
+                    module.Settings = s;
+                    _settingsSavedByModule = true;
+                }));
+                newAppDomains.Add(inf);
+            }
+
+            AppDomainInfo[] inactives;
+
+            // Switcheroo!
+            lock (_lockObject)
+            {
+                _inactiveAppDomains.AddRange(_activeAppDomains);
+                _activeAppDomains = newAppDomains;
+                _server.Options = newSettings.ServerOptions;
+                _server.Handler = createResolver().Handle;
+                if (startListening)
+                    _server.StartListening();
+                inactives = _inactiveAppDomains.ToArray();
+            }
+
+            // Try to clean up as many inactive AppDomains as possible
+            foreach (var inactive in inactives)
+                if (inactive.Runner.Shutdown())
+                {
+                    lock (_lockObject)
+                        _inactiveAppDomains.Remove(inactive);
+                    AppDomain.Unload(inactive.AppDomain);
+                }
+
+            return true;
+        }
+
+        private void responseExceptionHandler(HttpRequest req, Exception exception, HttpResponse resp)
+        {
+            lock (_log)
+            {
+                if (req != null && resp != null)
+                    _log.Error("Error in response for request {0} from {1}, status code {2}:".Fmt(req.Url.ToFull(), req.SourceIP, (int) resp.Status));
+                PropellerUtil.LogException(_log, exception);
+            }
+        }
+
+        private HttpResponse errorHandler(HttpRequest req, Exception exception)
+        {
+            exception.IfType(
+                (HttpException httpExc) =>
+                {
+                    _log.Info("Request {0} from {1} failure code {2}.".Fmt(req.Url.ToFull(), req.SourceIP, (int) httpExc.StatusCode));
+                },
+                exc =>
+                {
+                    lock (_log)
+                    {
+                        _log.Error("Error in handler for request {0} from {1}:".Fmt(req.Url.ToFull(), req.SourceIP));
+                        PropellerUtil.LogException(_log, exception);
+                    }
+                });
+            throw exception;
+        }
+
+        private UrlResolver createResolver()
+        {
+            lock (_lockObject)
+                return new UrlResolver(_activeAppDomains.SelectMany(inf => inf.UrlMappings));
+        }
+
+        private void checkSettingsChanges()
+        {
+            try
+            {
+                // ① If the server settings have changed, reinitialize everything.
+                if (reinitialize())
+                    return;
+
+                // ② If a module rewrote its settings, save the settings file.
+                if (_settingsSavedByModule)
+                {
+                    try
+                    {
+                        lock (_lockObject)
+                            CurrentSettings.Save();
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Error("Error saving Propeller settings:");
+                        PropellerUtil.LogException(_log, e);
+                    }
+                    _settingsSavedByModule = false;
+                    _settingsLastChangedTime = File.GetLastWriteTimeUtc(_settingsPath);
+                }
+
+                // ③ If any module wants to reinitialize, do it
+                AppDomainInfo[] actives;
+                lock (_lockObject)
+                    actives = _activeAppDomains.ToArray();
+                foreach (var active in actives)
+                {
+                    if (!active.MustReinitialize)   // this adds a log message if it returns true
+                        continue;
+                    var newAppDomain = new AppDomainInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
+                    lock (_lockObject)
+                    {
+                        _inactiveAppDomains.Add(active);
+                        _activeAppDomains.Remove(active);
+                        _activeAppDomains.Add(newAppDomain);
+                        _server.Handler = createResolver().Handle;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                PropellerUtil.LogException(_log, e);
+            }
+        }
+
+        public new void Start(string settingsPath, bool backgroundThread = false)
+        {
+            _settingsPath = settingsPath ?? SettingsUtil.GetAttribute<PropellerSettings>().GetFileName();
+
+            // Do one reinitialization outside of the periodic schedule so that if the first initialization fails, the service doesn’t start
+            try
+            {
+                reinitialize();
+            }
+            catch (Exception e)
+            {
+                PropellerUtil.LogException(_log ?? new ConsoleLogger(), e);
+                throw;
+            }
+
+            // Now start the periodic checking that might trigger reinitialization
+            base.Start(backgroundThread);
+        }
 
         protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
 
@@ -37,295 +235,14 @@ namespace Propeller
 
             Tasks = new List<Task>
             {
-                new Task() { Action = logHeartbeat, MinInterval = TimeSpan.FromMinutes(5) },
-                new Task() { Action = checkAndProcessFileChanges, MinInterval = checkInterval },
+                new Task { Action = logHeartbeat, MinInterval = TimeSpan.FromMinutes(5) },
+                new Task { Action = checkSettingsChanges, MinInterval = checkInterval },
             };
         }
 
         private void logHeartbeat()
         {
-            lock (PropellerProgram.Log)
-                PropellerProgram.Log.Debug("Heartbeat");
-        }
-
-        private static string configPath { get { return SettingsUtil.GetAttribute<PropellerSettings>().GetFileName(); } }
-
-        private void checkAndProcessFileChanges()
-        {
-            try
-            {
-                bool mustReinitServer = false;
-                bool needNewListener = false;
-                bool needNewSecureListener = false;
-                var oldPort = _currentConfig.NullOr(cfg => cfg.ServerOptions.Port);
-                var oldSecurePort = _currentConfig.NullOr(cfg => cfg.ServerOptions.SecurePort);
-
-                if (_firstRunEver || !File.Exists(configPath) || _currentConfig == null || _configFileChangeTime < File.GetLastWriteTimeUtc(configPath))
-                {
-                    mustReinitServer = true;
-
-                    // Read configuration file
-                    _currentConfig = PropellerStandalone.LoadSettings(PropellerProgram.Log, _firstRunEver);
-                    // Determine the file date/time afterwards because a new file may have been created
-                    _configFileChangeTime = new FileInfo(configPath).LastWriteTimeUtc;
-
-                    if (_currentConfig.ServerOptions.SecurePort != null && (_currentConfig.ServerOptions.CertificatePath == null || !File.Exists(_currentConfig.ServerOptions.CertificatePath)))
-                    {
-                        lock (PropellerProgram.Log)
-                            PropellerProgram.Log.Error("Cannot use HTTPS without a certificate. Set CertificatePath in the configuration to the path and filename of a valid X509 certificate.");
-                        _currentConfig.ServerOptions.SecurePort = null;
-                    }
-
-                    // If port number is different from previous port number, create a new listening thread and kill the old one
-                    needNewListener = _firstRunEver ? (_currentConfig.ServerOptions.Port != null) : (_currentConfig.ServerOptions.Port != oldPort);
-                    needNewSecureListener = _firstRunEver ? (_currentConfig.ServerOptions.SecurePort != null) : (_currentConfig.ServerOptions.SecurePort != oldSecurePort);
-                }
-
-                if (!Directory.Exists(_currentConfig.PluginDirectoryExpanded))
-                {
-                    try { Directory.CreateDirectory(_currentConfig.PluginDirectoryExpanded); }
-                    catch (Exception e)
-                    {
-                        lock (PropellerProgram.Log)
-                        {
-                            PropellerProgram.Log.Error(e.Message);
-                            PropellerProgram.Log.Error("Directory {0} cannot be created. Make sure the location is writable and try again, or edit the config file to change the path.".Fmt(_currentConfig.PluginDirectoryExpanded));
-                        }
-                        return;
-                    }
-                }
-
-                // Check whether any of the plugins reports that they need to be reinitialised.
-                if (!mustReinitServer && _activeAppDomain.Runner != null)
-                    mustReinitServer = _activeAppDomain.Runner.MustReinitServer();
-
-                if (mustReinitServer)
-                {
-                    var result = reinitServer();
-                    if (!result)
-                    {
-                        lock (PropellerProgram.Log)
-                            PropellerProgram.Log.Error("Server initialization failed.");
-                        if (_firstRunEver)
-                            throw new PropellerInitializationFailedException();
-                        return;
-                    }
-
-                    if (needNewListener)
-                        _currentListeningThread = switchListener(this, "HTTP", _firstRunEver, oldPort, _currentConfig.ServerOptions.Port, _currentListeningThread, false);
-                    if (needNewSecureListener)
-                        _currentSecureListeningThread = switchListener(this, "HTTPS", _firstRunEver, oldSecurePort, _currentConfig.ServerOptions.SecurePort, _currentSecureListeningThread, true);
-                }
-
-                _firstRunEver = false;
-
-                var newInactiveDomains = new List<AppDomainInfo>();
-                foreach (var entry in _inactiveAppDomains)
-                {
-                    if (entry.Runner.ActiveHandlers == 0)
-                    {
-                        entry.Runner.Shutdown();
-                        AppDomain.Unload(entry.AppDomain);
-                    }
-                    else
-                        newInactiveDomains.Add(entry);
-                }
-                _inactiveAppDomains = newInactiveDomains;
-            }
-            catch (PropellerInitializationFailedException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "checkAndProcessFileChanges()");
-            }
-            finally
-            {
-                // A module may rewrite its own config file during initialisation. If initialisation failed, the FileSystemWatcher would
-                // indicate this again as a config file change and immediately retrigger reinitialization. Avoid that.
-                if (_activeAppDomain != null)
-                    _activeAppDomain.Runner.ResetFileSystemWatchers();
-            }
-        }
-
-        private static ListeningThread switchListener(PropellerEngine super, string protocol, bool firstRunEver, int? oldPort, int? newPort, ListeningThread prevListeningThread, bool secure)
-        {
-            lock (PropellerProgram.Log)
-            {
-                if (firstRunEver || oldPort == null)
-                    PropellerProgram.Log.Info("Enabling {1} on port {0}.".Fmt(newPort, protocol));
-                else if (newPort != null)
-                    PropellerProgram.Log.Info("Switching {2} from port {0} to port {1}.".Fmt(oldPort, newPort, protocol));
-                else if (newPort == null)
-                    PropellerProgram.Log.Info("Disabling {1} on port {0}.".Fmt(oldPort, protocol));
-            }
-            if (prevListeningThread != null)
-                prevListeningThread.RequestExit();
-            return newPort.NullOr(port => new ListeningThread(super, port, secure));
-        }
-
-        private bool reinitServer()
-        {
-            lock (PropellerProgram.Log)
-                PropellerProgram.Log.Info(_firstRunEver ? "Starting Propeller..." : "Restarting Propeller...");
-
-            // Try to clean up old folders we've created before
-            var tempPath = _currentConfig.TempDirectory ?? Path.GetTempPath();
-            Directory.CreateDirectory(tempPath);
-            foreach (var pth in Directory.GetDirectories(tempPath, "propeller-tmp-*"))
-            {
-                try { Directory.Delete(pth, true); }
-                catch { }
-            }
-
-            // Find a new folder to put the DLL files into
-            int j = 1;
-            var copyToPath = Path.Combine(tempPath, "propeller-tmp-" + j);
-            while (Directory.Exists(copyToPath))
-            {
-                j++;
-                copyToPath = Path.Combine(tempPath, "propeller-tmp-" + j);
-            }
-            Directory.CreateDirectory(copyToPath);
-
-            AppDomain newAppDomain = AppDomain.CreateDomain("Propeller AppDomainRunner " + (_appDomainCount++), null, new AppDomainSetup
-            {
-                ApplicationBase = PathUtil.AppPath,
-                PrivateBinPath = copyToPath,
-            });
-            AppDomainRunner newRunner = (AppDomainRunner) newAppDomain.CreateInstanceAndUnwrap("Propeller", "Propeller.AppDomainRunner");
-
-            PropellerProgram.Log = PropellerStandalone.GetLogger(_currentConfig);
-
-            lock (PropellerProgram.Log)
-            {
-                try
-                {
-                    var result = newRunner.Init(_currentConfig.ServerOptions, _currentConfig.PluginDirectoryExpanded, copyToPath, PropellerProgram.Log, _currentConfig.HttpAccessLogFile, _currentConfig.HttpAccessLogToConsole, _currentConfig.HttpAccessLogVerbosity);
-
-                    // If Init() returns false, then it has already logged an exception.
-                    if (!result)
-                    {
-                        AppDomain.Unload(newAppDomain);
-                        return false;
-                    }
-                }
-                catch (Exception e)
-                {
-                    PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "AppDomainRunner.Init()");
-                    AppDomain.Unload(newAppDomain);
-                    return false;
-                }
-            }
-
-            // Initialization of the new AppDomain was successful, so switch over!
-            lock (_lockObject)
-            {
-                if (_activeAppDomain != null)
-                    _inactiveAppDomains.Add(_activeAppDomain);
-                _activeAppDomain = new AppDomainInfo { AppDomain = newAppDomain, Runner = newRunner };
-            }
-
-            lock (PropellerProgram.Log)
-                PropellerProgram.Log.Info("Propeller initialisation successful.");
-            return true;
-        }
-
-        public override bool Shutdown(bool waitForExit)
-        {
-            if (_currentListeningThread != null)
-            {
-                _currentListeningThread.RequestExit();
-                if (waitForExit)
-                    _currentListeningThread.WaitExited();
-            }
-
-            return base.Shutdown(waitForExit);
-        }
-
-        private sealed class ListeningThread
-        {
-            private Thread _listeningThread;
-            private PropellerEngine _super;
-            private int _port;
-            private bool _secure;
-            private CancellationTokenSource _cancel = new CancellationTokenSource();
-            private ManualResetEventSlim _exited = new ManualResetEventSlim();
-
-            public ListeningThread(PropellerEngine super, int port, bool secure)
-            {
-                _super = super;
-                _port = port;
-                _secure = secure;
-                _listeningThread = new Thread(listeningThreadFunction);
-                _listeningThread.Start();
-            }
-
-            public void WaitExited()
-            {
-                _exited.Wait();
-            }
-
-            public void RequestExit()
-            {
-                _cancel.Cancel();
-            }
-
-            private void listeningThreadFunction()
-            {
-                TcpListener listener = new TcpListener(IPAddress.Any, _port);
-                try
-                {
-                    listener.Start();
-                }
-                catch (SocketException e)
-                {
-                    lock (PropellerProgram.Log)
-                        PropellerProgram.Log.Error("Cannot bind to port {0}: {1}".Fmt(_port, e.Message));
-                    _exited.Set();
-                    return;
-                }
-                try
-                {
-                    while (!_cancel.IsCancellationRequested)
-                    {
-                        if (listener.Pending())
-                            listener.BeginAcceptSocket(acceptConnection, listener);
-                        else
-                            Thread.Sleep(1);
-                    }
-                }
-                finally
-                {
-                    lock (PropellerProgram.Log)
-                        PropellerProgram.Log.Info("Stop listening on port " + _port);
-                    try { listener.Stop(); }
-                    catch { }
-                    _exited.Set();
-                }
-            }
-
-            private void acceptConnection(IAsyncResult res)
-            {
-                var listener = (TcpListener) res.AsyncState;
-                Socket sck = listener.EndAcceptSocket(res);
-                lock (_super._lockObject)
-                {
-                    try
-                    {
-                        if (_super._activeAppDomain.Runner != null)
-                            // This creates a new thread for handling the connection and returns pretty immediately.
-                            _super._activeAppDomain.Runner.HandleRequest(sck.DuplicateAndClose(Process.GetCurrentProcess().Id), _secure);
-                        else
-                            sck.Close();
-                    }
-                    catch (Exception e)
-                    {
-                        PropellerStandalone.LogException(PropellerProgram.Log, e, "Propeller", "HandleRequest()");
-                    }
-                }
-            }
+            _log.Debug("Heartbeat");
         }
     }
 }

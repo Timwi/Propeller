@@ -1,13 +1,17 @@
 ﻿using System.ServiceProcess;
 using System.Threading;
+using RT.PropellerApi;
 using RT.Services;
 
-namespace Propeller
+namespace RT.Propeller
 {
     class PropellerService : SelfService
     {
-        private volatile bool _terminate = false;
         private bool _isStandalone = false;
+        private volatile bool _terminate = false;
+        private PropellerEngine _engine = new PropellerEngine();
+
+        public string SettingsPath { get; set; }
 
         public PropellerService()
         {
@@ -32,12 +36,12 @@ namespace Propeller
 
         protected override void OnStart(string[] args)
         {
-            PropellerProgram.Engine.Start();
+            _engine.Start(SettingsPath);
         }
 
         protected override void OnStop()
         {
-            PropellerProgram.Engine.Shutdown(false);
+            _engine.Shutdown(false);
         }
 
         public void Shutdown()

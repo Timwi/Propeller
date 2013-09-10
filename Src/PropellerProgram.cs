@@ -4,40 +4,68 @@ using System.Linq;
 using System.ServiceProcess;
 using RT.Services;
 using RT.Util;
+using RT.Util.CommandLine;
 using RT.Util.ExtensionMethods;
 
-namespace Propeller
+namespace RT.Propeller
 {
     public static class PropellerProgram
     {
-        internal static SingleSelfServiceProcess<PropellerService> ServiceProcess = new SingleSelfServiceProcess<PropellerService>();
-        internal static PropellerService Service = (PropellerService) ServiceProcess.Services.First();
-        internal static PropellerEngine Engine = new PropellerEngine();
-        internal static LoggerBase Log = new ConsoleLogger();
-
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
-            Log.Info("");
-            Log.Info("");
-            Log.Info("Propeller invoked with {0} argument(s): {1}".Fmt(args.Length, args.JoinString(separator: ", ", prefix: "\"", suffix: "\"")));
+            if (args.Length == 2 && args[0] == "--post-build-check")
+                return Ut.RunPostBuildChecks(args[1], System.Reflection.Assembly.GetExecutingAssembly());
 
-            if (args.Length == 0)
-                Service.RunAsStandalone(args);
-            else if (args[0] == "service")
-                ServiceProcess.ExecuteServices();
+            CommandLine cmdLine;
+            try
+            {
+                cmdLine = CommandLineParser<CommandLine>.Parse(args);
+            }
+            catch (CommandLineParseException e)
+            {
+                e.WriteUsageInfoToConsole();
+                return 1;
+            }
 
-            else if (args[0] == "install")
-                ServiceProcess.Install(ServiceAccount.NetworkService, "service");
-            else if (args[0] == "uninstall")
-                ServiceProcess.Uninstall();
+            var serviceProcess = new SingleSelfServiceProcess<PropellerService>();
+            var service = (PropellerService) serviceProcess.Services.First();
+            service.SettingsPath = cmdLine.SettingsPath;
 
-            else if (args[0] == "start")
-                ServiceProcess.StartAll();
-            else if (args[0] == "stop")
-                ServiceProcess.StopAll();
+            Console.WriteLine("Propeller invoked with action: " + cmdLine.Action);
+            Console.WriteLine("Settings file: " + (cmdLine.SettingsPath ?? "(default)"));
 
-            else
-                throw new InvalidOperationException("Unknown arguments. Valid arguments are: service, install, uninstall, start, stop. Or no arguments.");
+            switch (cmdLine.Action)
+            {
+                case Action.RunAsStandalone:
+                    service.RunAsStandalone(args);
+                    break;
+
+                case Action.Install:
+                    serviceProcess.Install(ServiceAccount.NetworkService, "service");
+                    break;
+
+                case Action.Uninstall:
+                    serviceProcess.Uninstall();
+                    break;
+
+                case Action.Start:
+                    serviceProcess.StartAll();
+                    break;
+
+                case Action.Stop:
+                    serviceProcess.StopAll();
+                    break;
+
+                case Action.Service:
+                    serviceProcess.ExecuteServices();
+                    break;
+
+                default:
+                    Console.WriteLine("Unknown arguments.");
+                    return 1;
+            }
+
+            return 0;
         }
     }
 }
