@@ -169,7 +169,7 @@ namespace RT.Propeller
                     try
                     {
                         lock (_lockObject)
-                            CurrentSettings.Save();
+                            CurrentSettings.Save(_settingsPath);
                     }
                     catch (Exception e)
                     {

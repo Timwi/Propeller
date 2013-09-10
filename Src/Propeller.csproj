@@ -50,9 +50,8 @@
     <Compile Include="CommandLine.cs" />
     <Compile Include="AppDomainInfo.cs" />
     <Compile Include="AppDomainRunner.cs" />
-    <Compile Include="DllInfo.cs" />
     <Compile Include="PropellerEngine.cs" />
-    <Compile Include="PropellerInitializationFailedException.cs" />
+    <Compile Include="ModuleInitializationException.cs" />
     <Compile Include="PropellerProgram.cs" />
     <Compile Include="PropellerService.cs">
       <SubType>Component</SubType>
