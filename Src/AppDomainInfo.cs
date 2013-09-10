@@ -16,10 +16,10 @@ namespace RT.Propeller
         public AppDomainRunner Runner { get; private set; }
         public PropellerModuleSettings ModuleSettings { get; private set; }
         public ISettingsSaver Saver { get; private set; }
+        public string TempPathUsed { get; private set; }
 
         private int _filesChangedCount = 0;
         private string _fileChanged = null;
-        private string _copyToPath;
         private LoggerBase _log;
         private List<FileSystemWatcher> _watchers = new List<FileSystemWatcher>();
 
@@ -37,9 +37,9 @@ namespace RT.Propeller
 
             // Find a new folder to put the DLL/EXE files into
             int j = 1;
-            do { _copyToPath = Path.Combine(tempFolder, "propeller-tmp-" + (j++)); }
-            while (Directory.Exists(_copyToPath));
-            Directory.CreateDirectory(_copyToPath);
+            do { TempPathUsed = Path.Combine(tempFolder, "propeller-tmp-" + (j++)); }
+            while (Directory.Exists(TempPathUsed));
+            Directory.CreateDirectory(TempPathUsed);
 
             // Copy all the DLLs/EXEs to the temporary folder
             foreach (var sourceFile in
@@ -47,7 +47,7 @@ namespace RT.Propeller
                 Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), "*.exe").Concat(
                 Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), "*.dll"))))
             {
-                var destFile = Path.Combine(_copyToPath, Path.GetFileName(sourceFile));
+                var destFile = Path.Combine(TempPathUsed, Path.GetFileName(sourceFile));
                 if (File.Exists(destFile))
                     _log.Warn("Skipping file {0} because destination file {1} already exists.".Fmt(sourceFile, destFile));
                 else
@@ -58,11 +58,11 @@ namespace RT.Propeller
             }
 
             // Create an AppDomain
-            var setup = new AppDomainSetup { ApplicationBase = _copyToPath, PrivateBinPath = _copyToPath };
+            var setup = new AppDomainSetup { ApplicationBase = TempPathUsed, PrivateBinPath = TempPathUsed };
             AppDomain = AppDomain.CreateDomain("Propeller AppDomain #{0}, module {1}".Fmt(_appDomainCount++, moduleSettings.ModuleName), null, setup);
             Runner = (AppDomainRunner) AppDomain.CreateInstanceAndUnwrap("Propeller", "RT.Propeller.AppDomainRunner");
             Runner.Init(
-                Path.Combine(_copyToPath, Path.GetFileName(moduleSettings.ModuleDll)),
+                Path.Combine(TempPathUsed, Path.GetFileName(moduleSettings.ModuleDll)),
                 moduleSettings.ModuleType,
                 moduleSettings.ModuleName,
                 moduleSettings.Settings,
@@ -124,6 +124,9 @@ namespace RT.Propeller
             foreach (var watcher in _watchers)
                 watcher.Dispose();
             _watchers.Clear();
+            AppDomain.Unload(AppDomain);
+            try { Directory.Delete(TempPathUsed, recursive: true); }
+            catch { }
         }
     }
 }

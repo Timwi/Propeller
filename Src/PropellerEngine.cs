@@ -115,8 +115,20 @@ namespace RT.Propeller
                 {
                     lock (_lockObject)
                         _inactiveAppDomains.Remove(inactive);
-                    AppDomain.Unload(inactive.AppDomain);
+                    inactive.Dispose();
                 }
+
+            // Delete any remaining temp folders no longer in use
+            HashSet<string> tempFoldersInUse;
+            lock (_lockObject)
+                tempFoldersInUse = _activeAppDomains.Concat(_inactiveAppDomains).Select(ad => ad.TempPathUsed).ToHashSet();
+            foreach (var tempFolder in Directory.EnumerateDirectories(CurrentSettings.TempFolder, "propeller-tmp-*"))
+            {
+                if (tempFoldersInUse.Contains(tempFolder))
+                    continue;
+                try { Directory.Delete(tempFolder, recursive: true); }
+                catch { }
+            }
 
             return true;
         }
@@ -204,7 +216,12 @@ namespace RT.Propeller
             }
         }
 
-        public new void Start(string settingsPath, bool backgroundThread = false)
+        public override void Start(bool backgroundThread = false)
+        {
+            Start(null, backgroundThread);
+        }
+
+        public void Start(string settingsPath, bool backgroundThread = false)
         {
             _settingsPath = settingsPath ?? SettingsUtil.GetAttribute<PropellerSettings>().GetFileName();
 
@@ -221,6 +238,21 @@ namespace RT.Propeller
 
             // Now start the periodic checking that might trigger reinitialization
             base.Start(backgroundThread);
+        }
+
+        public override bool Shutdown(bool waitForExit)
+        {
+            if (_server != null)
+            {
+                _server.StopListening();
+                _server.ShutdownComplete.WaitOne(TimeSpan.FromSeconds(10));
+            }
+            foreach (var domain in _activeAppDomains)
+            {
+                domain.Runner.Shutdown();
+                domain.Dispose();
+            }
+            return base.Shutdown(waitForExit);
         }
 
         protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
