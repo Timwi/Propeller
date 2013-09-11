@@ -112,12 +112,20 @@ namespace RT.Propeller
 
             // Try to clean up as many inactive AppDomains as possible
             foreach (var inactive in inactives)
-                if (inactive.Runner.Shutdown())
+            {
+                // Ask the runner if it can shutdown; if this throws, it’s in a broken state anyway, so unload it by force.
+                bool shutDownAllowed;
+                try { shutDownAllowed = inactive.RunnerProxy.Shutdown(); }
+                catch { shutDownAllowed = true; }
+
+                if (shutDownAllowed)
                 {
                     lock (_lockObject)
                         _inactiveAppDomains.Remove(inactive);
-                    inactive.Dispose();
+                    try { inactive.Dispose(); }
+                    catch { }
                 }
+            }
 
             // Delete any remaining temp folders no longer in use
             HashSet<string> tempFoldersInUse;
@@ -243,15 +251,17 @@ namespace RT.Propeller
 
         public override bool Shutdown(bool waitForExit)
         {
+            if (_log != null)
+                _log.Info("Propeller shutting down.");
             if (_server != null)
             {
                 _server.StopListening();
                 if (!_server.ShutdownComplete.WaitOne(TimeSpan.FromSeconds(5)))
                     _server.StopListening(brutal: true, blocking: true);
             }
-            foreach (var domain in _activeAppDomains)
+            foreach (var domain in _activeAppDomains.Concat(_inactiveAppDomains))
             {
-                domain.Runner.Shutdown();
+                domain.RunnerProxy.Shutdown();
                 domain.Dispose();
             }
             return base.Shutdown(waitForExit);

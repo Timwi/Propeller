@@ -13,7 +13,7 @@ namespace RT.Propeller
     {
         public AppDomain AppDomain { get; private set; }
         public UrlMapping[] UrlMappings { get; private set; }
-        public AppDomainRunner Runner { get; private set; }
+        public AppDomainRunner RunnerProxy { get; private set; }
         public PropellerModuleSettings ModuleSettings { get; private set; }
         public ISettingsSaver Saver { get; private set; }
         public string TempPathUsed { get; private set; }
@@ -60,8 +60,8 @@ namespace RT.Propeller
             // Create an AppDomain
             var setup = new AppDomainSetup { ApplicationBase = TempPathUsed, PrivateBinPath = TempPathUsed };
             AppDomain = AppDomain.CreateDomain("Propeller AppDomain #{0}, module {1}".Fmt(_appDomainCount++, moduleSettings.ModuleName), null, setup);
-            Runner = (AppDomainRunner) AppDomain.CreateInstanceAndUnwrap("Propeller", "RT.Propeller.AppDomainRunner");
-            Runner.Init(
+            RunnerProxy = (AppDomainRunner) AppDomain.CreateInstanceAndUnwrap("Propeller", "RT.Propeller.AppDomainRunner");
+            RunnerProxy.Init(
                 Path.Combine(TempPathUsed, Path.GetFileName(moduleSettings.ModuleDll)),
                 moduleSettings.ModuleType,
                 moduleSettings.ModuleName,
@@ -70,12 +70,12 @@ namespace RT.Propeller
                 saver);
 
             IEnumerable<string> filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
-            if (Runner.FileFiltersToBeMonitoredForChanges != null)
-                filters = filters.Concat(Runner.FileFiltersToBeMonitoredForChanges);
+            if (RunnerProxy.FileFiltersToBeMonitoredForChanges != null)
+                filters = filters.Concat(RunnerProxy.FileFiltersToBeMonitoredForChanges);
             foreach (var filter in filters.Concat(Path.Combine(Path.GetDirectoryName(moduleSettings.ModuleDll), "*")))
                 addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
 
-            UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, Runner.Handle, true)).ToArray();
+            UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, RunnerProxy.Handle, true)).ToArray();
 
             _log.Info("Module {0} URLs: {1}".Fmt(moduleSettings.ModuleName, moduleSettings.Hooks.JoinString("; ")));
         }
@@ -110,7 +110,7 @@ namespace RT.Propeller
                     return true;
                 }
 
-                if (Runner.MustReinitialize)
+                if (RunnerProxy.MustReinitialize)
                 {
                     _log.Info(@"Module {0} asks to be reinitialized.".Fmt(ModuleSettings.ModuleName));
                     return true;
@@ -123,7 +123,8 @@ namespace RT.Propeller
         public void Dispose()
         {
             foreach (var watcher in _watchers)
-                watcher.Dispose();
+                try { watcher.Dispose(); }
+                catch { }
             _watchers.Clear();
             AppDomain.Unload(AppDomain);
             try { Directory.Delete(TempPathUsed, recursive: true); }
