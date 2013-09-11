@@ -57,12 +57,13 @@ namespace RT.PropellerApi
         ///     Specifies a set of file filters (e.g. “C:\Folder\*.xml”) Propeller should monitor for file changes. If any
         ///     matching file is added, deleted or modified, the module is reinitialized. The folder that contains <see
         ///     cref="ModuleDll"/> is already automatically monitored and does not need to be listed here.</summary>
-        [ClassifyNotNull]
-        public string[] MonitorFilters = { PathUtil.ExpandPath(@"$(AppPath)\*.xml") };
+        [ClassifyNotNull, ClassifyIgnoreIfDefault, ClassifyIgnoreIfEmpty]
+        public string[] MonitorFilters = { };
 
         /// <summary>
         ///     The CLR type name of the Propeller module. This may be <c>null</c> if the DLL file contains only a single type
         ///     that implements <see cref="IPropellerModule"/>.</summary>
+        [ClassifyIgnoreIfDefault]
         public string ModuleType = null;
 
         /// <summary>The URL hooks to hook this module to.</summary>
