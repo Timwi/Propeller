@@ -22,7 +22,7 @@ namespace RT.PropellerApi
             if (settings.Modules.Length != 1)
                 throw new InvalidOperationException("Propeller Standalone mode can only accept a settings file that has exactly one module configuration.");
 
-            var log = GetLogger(settings);
+            var log = GetLogger(true, settings.LogFile, settings.LogVerbosity);
             log.Info("Running Propeller module {0} in standalone mode.".Fmt(module.Name));
 
             var resolver = new UrlResolver();
@@ -108,19 +108,33 @@ namespace RT.PropellerApi
         /// <summary>
         ///     Returns a logger in accordance with the specified <paramref name="settings"/>, or a <see
         ///     cref="ConsoleLogger"/> if <paramref name="settings"/> is <c>null</c>.</summary>
-        public static LoggerBase GetLogger(PropellerSettings settings = null)
+        public static LoggerBase GetLogger(bool console, string file, string logVerbosity)
         {
-            var consoleLogger = new ConsoleLogger();
-            if (settings == null || settings.LogFile == null)
+            if (!console && file == null)
+                return new NullLogger();
+
+            ConsoleLogger consoleLogger = null;
+            if (console)
             {
-                consoleLogger.ConfigureVerbosity(settings.LogVerbosity);
-                return consoleLogger;
+                consoleLogger = new ConsoleLogger();
+                consoleLogger.ConfigureVerbosity(logVerbosity);
+                if (file == null)
+                    return consoleLogger;
+            }
+
+            FileAppendLogger fileLogger = null;
+            if (file != null)
+            {
+                fileLogger = new FileAppendLogger(file) { SharingVioWait = TimeSpan.FromSeconds(2) };
+                fileLogger.ConfigureVerbosity(logVerbosity);
+                if (!console)
+                    return fileLogger;
             }
 
             var logger = new MulticastLogger();
-            logger.Loggers["file"] = new FileAppendLogger(settings.LogFile) { SharingVioWait = TimeSpan.FromSeconds(2) };
+            logger.Loggers["file"] = fileLogger;
             logger.Loggers["console"] = consoleLogger;
-            logger.ConfigureVerbosity(settings.LogVerbosity);
+            logger.ConfigureVerbosity(logVerbosity);
             return logger;
         }
 

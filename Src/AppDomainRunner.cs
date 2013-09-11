@@ -61,7 +61,7 @@ namespace RT.Propeller
             return _module.Handle(req);
         }
 
-        public IEnumerable<string> FileFiltersToBeMonitoredForChanges { get { return _module.FileFiltersToBeMonitoredForChanges; } }
+        public string[] FileFiltersToBeMonitoredForChanges { get { return _module.FileFiltersToBeMonitoredForChanges; } }
         public bool MustReinitialize { get { return _module.MustReinitialize; } }
 
         public bool Shutdown()

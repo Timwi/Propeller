@@ -43,7 +43,7 @@ namespace RT.Propeller
             // ... so remember the file date/time stamp *after* the writing
             _settingsLastChangedTime = File.GetLastWriteTimeUtc(_settingsPath);
 
-            _log = PropellerUtil.GetLogger(newSettings);
+            _log = PropellerUtil.GetLogger(true, newSettings.LogFile, newSettings.LogVerbosity);
             _log.Info(firstRunEver ? "Initializing Propeller" : "Reinitializing Propeller");
 
             // If either port number or the bind-to address have changed, stop and restart the server’s listener.
@@ -104,6 +104,7 @@ namespace RT.Propeller
                 _activeAppDomains = newAppDomains;
                 _server.Options = newSettings.ServerOptions;
                 _server.Handler = createResolver().Handle;
+                _server.Log = PropellerUtil.GetLogger(newSettings.HttpAccessLogToConsole, newSettings.HttpAccessLogFile, newSettings.HttpAccessLogVerbosity);
                 if (startListening)
                     _server.StartListening();
                 inactives = _inactiveAppDomains.ToArray();
@@ -245,7 +246,8 @@ namespace RT.Propeller
             if (_server != null)
             {
                 _server.StopListening();
-                _server.ShutdownComplete.WaitOne(TimeSpan.FromSeconds(10));
+                if (!_server.ShutdownComplete.WaitOne(TimeSpan.FromSeconds(5)))
+                    _server.StopListening(brutal: true, blocking: true);
             }
             foreach (var domain in _activeAppDomains)
             {

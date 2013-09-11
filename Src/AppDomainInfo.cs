@@ -69,10 +69,11 @@ namespace RT.Propeller
                 _log,
                 saver);
 
-            var filters = Runner.FileFiltersToBeMonitoredForChanges;
-            if (filters != null)
-                foreach (var filter in filters)
-                    addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
+            IEnumerable<string> filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
+            if (Runner.FileFiltersToBeMonitoredForChanges != null)
+                filters = filters.Concat(Runner.FileFiltersToBeMonitoredForChanges);
+            foreach (var filter in filters.Concat(Path.Combine(Path.GetDirectoryName(moduleSettings.ModuleDll), "*")))
+                addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
 
             UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, Runner.Handle, true)).ToArray();
 
