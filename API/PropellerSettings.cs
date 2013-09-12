@@ -40,6 +40,7 @@ namespace RT.PropellerApi
         public string TempFolder = null;
     }
 
+    /// <summary>Encapsulates the settings pertaining to a module running within Propeller, including its name and URL hooks.</summary>
     public sealed class PropellerModuleSettings
     {
         /// <summary>
@@ -47,9 +48,7 @@ namespace RT.PropellerApi
         ///     instances of the same module.</summary>
         public string ModuleName = "MyModule";
 
-        /// <summary>
-        ///     The name of the DLL file containing the Propeller module. Must contain only a filename (no path) and must
-        ///     refer to a file located in the <see cref="SourceFolder"/>.</summary>
+        /// <summary>The path and filename of the DLL file containing the Propeller module.</summary>
         [ClassifyNotNull]
         public string ModuleDll = PathUtil.ExpandPath(@"$(AppPath)\MyModule\MyModule.dll");
 

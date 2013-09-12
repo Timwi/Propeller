@@ -6,15 +6,16 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.PropellerApi
 {
+    /// <summary>Contains helper methods relating to Propeller.</summary>
     public static class PropellerUtil
     {
         /// <summary>
         ///     Executes a Propeller module in standalone mode (as opposed to being hosted by the Propeller engine).</summary>
         /// <param name="module">
         ///     An instance of the module to be executed.</param>
-        /// <param name="settings">
-        ///     Custom Propeller settings. Leave unspecified to load settings in exactly the same way as the Propeller engine
-        ///     would load them had the module been hosted by it.</param>
+        /// <param name="settingsPath">
+        ///     Path and filename of the Propeller settings file. This file must contain a Propeller configuration containing
+        ///     exactly one module configuration.</param>
         public static void RunStandalone(string settingsPath, IPropellerModule module)
         {
             var settings = LoadSettings(settingsPath, new ConsoleLogger(), true);
@@ -60,8 +61,10 @@ namespace RT.PropellerApi
         /// <summary>
         ///     Loads Propeller settings from the appropriate location. Using this method ensures that settings are loaded in
         ///     exactly the same way and from the same place as the Propeller engine would load them.</summary>
+        /// <param name="settingsPath">
+        ///     Path and filename of the settings to load.</param>
         /// <param name="log">
-        ///     Information about how the settings were loaded is logged here. Must not be null.</param>
+        ///     Information about how the settings were loaded is logged here. Must not be <c>null</c>.</param>
         /// <param name="firstRunEver">
         ///     Adjusts the log messages for improved human readability.</param>
         public static PropellerSettings LoadSettings(string settingsPath, LoggerBase log, bool firstRunEver)
@@ -106,8 +109,18 @@ namespace RT.PropellerApi
         }
 
         /// <summary>
-        ///     Returns a logger in accordance with the specified <paramref name="settings"/>, or a <see
-        ///     cref="ConsoleLogger"/> if <paramref name="settings"/> is <c>null</c>.</summary>
+        ///     Returns a logger in accordance with the specified settings.</summary>
+        /// <param name="console">
+        ///     If <c>true</c>, the resulting logger will log to the console.</param>
+        /// <param name="file">
+        ///     If non-<c>null</c>, the resulting logger will log to the specified file.</param>
+        /// <param name="logVerbosity">
+        ///     Configures the verbosity of the resulting logger.</param>
+        /// <remarks>
+        ///     <para>
+        ///         Uses <see cref="ConsoleLogger"/> amd <see cref="FileAppendLogger"/> as appropriate.</para>
+        ///     <para>
+        ///         If both logging mechanisms are specified, uses a <see cref="MulticastLogger"/> to combine the two.</para></remarks>
         public static LoggerBase GetLogger(bool console, string file, string logVerbosity)
         {
             if (!console && file == null)
@@ -138,11 +151,12 @@ namespace RT.PropellerApi
             return logger;
         }
 
-        /// <summary>Logs an exception.</summary>
-        /// <param name="log">Logger to log the exception to.</param>
-        /// <param name="e">The exception to log.</param>
-        /// <param name="source">The source of the exception, e.g. <c>"Propeller"</c>, <c>"a handler"</c>, <c>"the plugin “{0}”".Fmt(pluginName)</c>.</param>
-        /// <param name="thrownBy">The name of a method, property or object that is responsible for the exception.</param>
+        /// <summary>
+        ///     Logs an exception.</summary>
+        /// <param name="log">
+        ///     Logger to log the exception to.</param>
+        /// <param name="e">
+        ///     The exception to log.</param>
         public static void LogException(LoggerBase log, Exception e)
         {
             lock (log)

@@ -24,6 +24,8 @@ namespace RT.PropellerApi
         ///     Reference to a <see cref="LoggerBase"/> that should be used to log messages.</param>
         /// <param name="settings">
         ///     The module’s settings as stored within the Propeller settings file.</param>
+        /// <param name="saver">
+        ///     An object that can be used to save the module’s settings.</param>
         void Init(LoggerBase log, JsonValue settings, ISettingsSaver saver);
 
         /// <summary>
