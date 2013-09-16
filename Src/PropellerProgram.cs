@@ -1,7 +1,7 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.ServiceProcess;
+using System.Threading;
 using RT.Services;
 using RT.Util;
 using RT.Util.CommandLine;
@@ -37,7 +37,13 @@ namespace RT.Propeller
             switch (cmdLine.Action)
             {
                 case Action.RunAsStandalone:
-                    service.RunAsStandalone(args);
+                    var thread = new Thread(() => { service.RunAsStandalone(args); });
+                    thread.Start();
+                    Console.WriteLine("Running. Press ENTER to exit.");
+                    Console.ReadLine();
+                    Console.WriteLine("Shutting down...");
+                    service.Shutdown();
+                    thread.Join();
                     break;
 
                 case Action.Install:
@@ -67,6 +73,11 @@ namespace RT.Propeller
                     Console.WriteLine("Unknown arguments.");
                     return 1;
             }
+
+#if DEBUG
+            Console.WriteLine("Done. Press ENTER to exit.");
+            Console.ReadLine();
+#endif
 
             return 0;
         }

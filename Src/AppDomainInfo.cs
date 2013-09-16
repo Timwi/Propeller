@@ -1,11 +1,12 @@
 ﻿using System;
-using RT.Util.ExtensionMethods;
-using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
+using RT.Util.ExtensionMethods;
 
 namespace RT.Propeller
 {
@@ -18,6 +19,7 @@ namespace RT.Propeller
         public ISettingsSaver Saver { get; private set; }
         public string TempPathUsed { get; private set; }
 
+        private int _activeConnections = 0;
         private int _filesChangedCount = 0;
         private string _fileChanged = null;
         private LoggerBase _log;
@@ -30,6 +32,7 @@ namespace RT.Propeller
             ModuleSettings = moduleSettings;
             Saver = saver;
             _log = log;
+            _activeConnections = 0;
 
             // Determine the temporary folder that DLLs will be copied to
             var tempFolder = settings.TempFolder ?? Path.GetTempPath();
@@ -49,10 +52,10 @@ namespace RT.Propeller
             {
                 var destFile = Path.Combine(TempPathUsed, Path.GetFileName(sourceFile));
                 if (File.Exists(destFile))
-                    _log.Warn("Skipping file {0} because destination file {1} already exists.".Fmt(sourceFile, destFile));
+                    _log.Warn(2, "Skipping file {0} because destination file {1} already exists.".Fmt(sourceFile, destFile));
                 else
                 {
-                    _log.Info("Copying file {0} to {1}".Fmt(sourceFile, destFile));
+                    _log.Info(2, "Copying file {0} to {1}".Fmt(sourceFile, destFile));
                     File.Copy(sourceFile, destFile);
                 }
             }
@@ -75,9 +78,28 @@ namespace RT.Propeller
             foreach (var filter in filters.Concat(Path.Combine(Path.GetDirectoryName(moduleSettings.ModuleDll), "*")))
                 addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
 
-            UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, RunnerProxy.Handle, true)).ToArray();
+            UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, Handle, true)).ToArray();
 
             _log.Info("Module {0} URLs: {1}".Fmt(moduleSettings.ModuleName, moduleSettings.Hooks.JoinString("; ")));
+        }
+
+        public HttpResponse Handle(HttpRequest req)
+        {
+            Interlocked.Increment(ref _activeConnections);
+
+            try
+            {
+                // Must call the handle method first because this is a call across the AppDomain boundary
+                return RunnerProxy.Handle(req);
+            }
+            finally
+            {
+                // THEN add the callback, which would otherwise not be serializable
+                req.CleanUpCallback += () =>
+                {
+                    Interlocked.Decrement(ref _activeConnections);
+                };
+            }
         }
 
         private void addFileSystemWatcher(string path, string filter)
@@ -119,6 +141,8 @@ namespace RT.Propeller
                 return false;
             }
         }
+
+        public bool CanShutdown { get { return _activeConnections == 0; } }
 
         public void Dispose()
         {

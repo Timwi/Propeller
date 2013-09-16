@@ -18,7 +18,6 @@ namespace RT.Propeller
     [Serializable]
     class AppDomainRunner : MarshalByRefObject
     {
-        private int _activeConnections = 0;
         private string _moduleName;
         private LoggerBase _log;
         private IPropellerModule _module;
@@ -27,7 +26,6 @@ namespace RT.Propeller
         {
             _log = log;
             _moduleName = moduleName;
-            _activeConnections = 0;
 
             var assembly = Assembly.LoadFile(modulePath);
             Type moduleType;
@@ -53,23 +51,15 @@ namespace RT.Propeller
 
         public HttpResponse Handle(HttpRequest req)
         {
-            Interlocked.Increment(ref _activeConnections);
-            req.CleanUpCallback += () =>
-            {
-                Interlocked.Decrement(ref _activeConnections);
-            };
             return _module.Handle(req);
         }
 
         public string[] FileFiltersToBeMonitoredForChanges { get { return _module.FileFiltersToBeMonitoredForChanges; } }
         public bool MustReinitialize { get { return _module.MustReinitialize; } }
 
-        public bool Shutdown()
+        public void Shutdown()
         {
-            if (_activeConnections > 0)
-                return false;
             _module.Shutdown();
-            return true;
         }
     }
 }

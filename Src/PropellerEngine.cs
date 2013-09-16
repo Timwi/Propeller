@@ -27,7 +27,6 @@ namespace RT.Propeller
         private DateTime _settingsLastChangedTime = DateTime.MinValue;
         private HttpServer _server;
         private LoggerBase _log;
-        private UrlResolver _resolver;
         private HashSet<AppDomainInfo> _activeAppDomains = new HashSet<AppDomainInfo>();
         private HashSet<AppDomainInfo> _inactiveAppDomains = new HashSet<AppDomainInfo>();
 
@@ -95,8 +94,6 @@ namespace RT.Propeller
                 newAppDomains.Add(inf);
             }
 
-            AppDomainInfo[] inactives;
-
             // Switcheroo!
             lock (_lockObject)
             {
@@ -107,24 +104,6 @@ namespace RT.Propeller
                 _server.Log = PropellerUtil.GetLogger(newSettings.HttpAccessLogToConsole, newSettings.HttpAccessLogFile, newSettings.HttpAccessLogVerbosity);
                 if (startListening)
                     _server.StartListening();
-                inactives = _inactiveAppDomains.ToArray();
-            }
-
-            // Try to clean up as many inactive AppDomains as possible
-            foreach (var inactive in inactives)
-            {
-                // Ask the runner if it can shutdown; if this throws, it’s in a broken state anyway, so unload it by force.
-                bool shutDownAllowed;
-                try { shutDownAllowed = inactive.RunnerProxy.Shutdown(); }
-                catch { shutDownAllowed = true; }
-
-                if (shutDownAllowed)
-                {
-                    lock (_lockObject)
-                        _inactiveAppDomains.Remove(inactive);
-                    try { inactive.Dispose(); }
-                    catch { }
-                }
             }
 
             // Delete any remaining temp folders no longer in use
@@ -216,6 +195,26 @@ namespace RT.Propeller
                         _activeAppDomains.Remove(active);
                         _activeAppDomains.Add(newAppDomain);
                         _server.Handler = createResolver().Handle;
+                    }
+                }
+
+                // ④ Try to clean up as many inactive AppDomains as possible
+                AppDomainInfo[] inactives;
+                lock (_lockObject)
+                    inactives = _inactiveAppDomains.ToArray();
+                foreach (var inactive in inactives)
+                {
+                    // Ask the runner if it can shutdown; if this throws, it’s in a broken state anyway, so unload it by force.
+                    bool shutDownAllowed;
+                    try { shutDownAllowed = inactive.CanShutdown; }
+                    catch { shutDownAllowed = true; }
+
+                    if (shutDownAllowed)
+                    {
+                        lock (_lockObject)
+                            _inactiveAppDomains.Remove(inactive);
+                        try { inactive.Dispose(); }
+                        catch { }
                     }
                 }
             }
