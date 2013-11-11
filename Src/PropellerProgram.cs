@@ -19,7 +19,7 @@ namespace RT.Propeller
             CommandLine cmdLine;
             try
             {
-                cmdLine = CommandLineParser<CommandLine>.Parse(args);
+                cmdLine = CommandLineParser.Parse<CommandLine>(args);
             }
             catch (CommandLineParseException e)
             {
