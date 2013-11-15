@@ -75,7 +75,7 @@ namespace RT.Propeller
             IEnumerable<string> filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
             if (RunnerProxy.FileFiltersToBeMonitoredForChanges != null)
                 filters = filters.Concat(RunnerProxy.FileFiltersToBeMonitoredForChanges);
-            foreach (var filter in filters.Concat(Path.Combine(Path.GetDirectoryName(moduleSettings.ModuleDll), "*")))
+            foreach (var filter in filters.Concat(moduleSettings.ModuleDll))
                 addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
 
             UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, Handle, true)).ToArray();
@@ -117,6 +117,8 @@ namespace RT.Propeller
 
         private void fileSystemChangeDetected(object sender, FileSystemEventArgs e)
         {
+            if (Directory.Exists(e.FullPath))
+                return;
             _filesChangedCount++;
             _fileChanged = e.FullPath;
         }
