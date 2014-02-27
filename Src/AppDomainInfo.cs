@@ -144,7 +144,7 @@ namespace RT.Propeller
             }
         }
 
-        public bool CanShutdown { get { return _activeConnections == 0; } }
+        public bool HasActiveConnections { get { return _activeConnections == 0; } }
 
         public void Dispose()
         {

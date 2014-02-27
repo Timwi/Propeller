@@ -97,6 +97,7 @@ namespace RT.Propeller
             // Switcheroo!
             lock (_lockObject)
             {
+                _log.Info("AppDomain Switcheroo");
                 _inactiveAppDomains.AddRange(_activeAppDomains);
                 _activeAppDomains = newAppDomains;
                 _server.Options = newSettings.ServerOptions;
@@ -166,6 +167,7 @@ namespace RT.Propeller
                 // ② If a module rewrote its settings, save the settings file.
                 if (_settingsSavedByModule)
                 {
+                    _log.Debug("A module saved the settings.");
                     try
                     {
                         lock (_lockObject)
@@ -188,6 +190,7 @@ namespace RT.Propeller
                 {
                     if (!active.MustReinitialize)   // this adds a log message if it returns true
                         continue;
+                    _log.Info("Module says it must reinitialize: {0} ({1})".Fmt(active.ModuleSettings.ModuleName, active.GetHashCode()));
                     var newAppDomain = new AppDomainInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
                     lock (_lockObject)
                     {
@@ -195,6 +198,8 @@ namespace RT.Propeller
                         _activeAppDomains.Remove(active);
                         _activeAppDomains.Add(newAppDomain);
                         _server.Handler = createResolver().Handle;
+                        _log.Info(" --- {0} replaced with {1}, {0} shutting down".Fmt(active.GetHashCode(), newAppDomain.GetHashCode()));
+                        active.RunnerProxy.Shutdown();
                     }
                 }
 
@@ -204,18 +209,21 @@ namespace RT.Propeller
                     inactives = _inactiveAppDomains.ToArray();
                 foreach (var inactive in inactives)
                 {
-                    // Ask the runner if it can shutdown; if this throws, it’s in a broken state anyway, so unload it by force.
-                    bool shutDownAllowed;
-                    try { shutDownAllowed = inactive.CanShutdown; }
-                    catch { shutDownAllowed = true; }
+                    // Ask the runner if it has active connections; if this throws, it’s in a broken state anyway, so unload it by force.
+                    bool disposeAllowed;
+                    try { disposeAllowed = inactive.HasActiveConnections; }
+                    catch { disposeAllowed = true; }
 
-                    if (shutDownAllowed)
+                    if (disposeAllowed)
                     {
+                        _log.Info("Disposing inactive module: {0} ({1})".Fmt(inactive.ModuleSettings.ModuleName, inactive.GetHashCode()));
                         lock (_lockObject)
                             _inactiveAppDomains.Remove(inactive);
                         try { inactive.Dispose(); }
                         catch { }
                     }
+                    else
+                        _log.Info("Inactive module still has active connections: {0} ({1})".Fmt(inactive.ModuleSettings.ModuleName, inactive.GetHashCode()));
                 }
             }
             catch (Exception e)
