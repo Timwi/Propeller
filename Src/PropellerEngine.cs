@@ -258,6 +258,8 @@ namespace RT.Propeller
 
         public override bool Shutdown(bool waitForExit)
         {
+            if (!base.Shutdown(true))
+                return false;
             if (_log != null)
                 _log.Info("Propeller shutting down.");
             if (_server != null)
@@ -271,7 +273,7 @@ namespace RT.Propeller
                 domain.RunnerProxy.Shutdown();
                 domain.Dispose();
             }
-            return base.Shutdown(waitForExit);
+            return true;
         }
 
         protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
