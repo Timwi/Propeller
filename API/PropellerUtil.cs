@@ -3,6 +3,7 @@ using System.IO;
 using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
+using RT.Util.Json;
 
 namespace RT.PropellerApi
 {
@@ -20,6 +21,18 @@ namespace RT.PropellerApi
         {
             var settings = LoadSettings(settingsPath, new ConsoleLogger(), true);
 
+            if (settings.Modules.Length == 0)
+            {
+                settings.Modules = Ut.NewArray(new PropellerModuleSettings
+                {
+                    ModuleName = module.Name,
+                    ModuleDll = null,
+                    Settings = new JsonDict(),
+                    Hooks = Ut.NewArray(new UrlHook(domain: "localhost", protocols: Protocols.All))
+                });
+                settings.SaveLoud(settingsPath);
+            }
+
             if (settings.Modules.Length != 1)
                 throw new InvalidOperationException("Propeller Standalone mode can only accept a settings file that has exactly one module configuration.");
 
@@ -28,6 +41,9 @@ namespace RT.PropellerApi
 
             var resolver = new UrlResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
+#if DEBUG
+            server.PropagateExceptions = true;
+#endif
             var pretendPluginPath = PathUtil.AppPathCombine(module.Name + ".dll");
 
             module.Init(log, settings.Modules[0].Settings, new SettingsSaver(s =>
