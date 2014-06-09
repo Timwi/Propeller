@@ -47,8 +47,7 @@ namespace RT.Propeller
             // Copy all the DLLs/EXEs to the temporary folder
             foreach (var sourceFile in
                 new[] { typeof(PropellerEngine), typeof(IPropellerModule), typeof(HttpServer), typeof(Ut) }.Select(type => type.Assembly.Location).Concat(
-                Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), "*.exe").Concat(
-                Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), "*.dll"))))
+                new[] { "*.exe", "*.dll", "*.pdb" }.SelectMany(ext => Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), ext))))
             {
                 var destFile = Path.Combine(TempPathUsed, Path.GetFileName(sourceFile));
                 if (File.Exists(destFile))
