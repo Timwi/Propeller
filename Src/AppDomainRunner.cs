@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Threading;
-using RT.Propeller;
+using System.Runtime.Remoting;
+using System.Security.Permissions;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
@@ -21,6 +18,13 @@ namespace RT.Propeller
         private string _moduleName;
         private LoggerBase _log;
         private IPropellerModule _module;
+
+        /// <summary>See base.</summary>
+        [SecurityPermissionAttribute(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
+        public override object InitializeLifetimeService()
+        {
+            return null;
+        }
 
         public void Init(string modulePath, string moduleClrType, string moduleName, JsonValue moduleSettings, LoggerBase log, ISettingsSaver saver)
         {
@@ -59,6 +63,7 @@ namespace RT.Propeller
 
         public void Shutdown()
         {
+            RemotingServices.Disconnect(this);
             _module.Shutdown();
         }
     }
