@@ -48,35 +48,28 @@ namespace RT.Propeller
             // If either port number or the bind-to address have changed, stop and restart the server’s listener.
             var startListening = false;
             if (_server == null || CurrentSettings == null ||
-                CurrentSettings.ServerOptions.Port != newSettings.ServerOptions.Port ||
-                CurrentSettings.ServerOptions.SecurePort != newSettings.ServerOptions.SecurePort ||
-                CurrentSettings.ServerOptions.BindAddress != newSettings.ServerOptions.BindAddress)
+                !CurrentSettings.ServerOptions.Endpoints.Values.SequenceEqual(newSettings.ServerOptions.Endpoints.Values))
             {
-                foreach (var secure in new[] { false, true })
+                var removed = CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
+                var added = newSettings.ServerOptions.Endpoints.Values.Except(CurrentSettings.ServerOptions.Endpoints.Values).ToArray();
+                if (removed.Length > 0 || added.Length > 0)
                 {
-                    var oldPort = CurrentSettings.NullOr(cs => secure ? cs.ServerOptions.SecurePort : cs.ServerOptions.Port);
-                    var newPort = secure ? newSettings.ServerOptions.SecurePort : newSettings.ServerOptions.Port;
-                    var protocol = secure ? "HTTPS" : "HTTP";
-                    if (oldPort == null && newPort == null)
-                        continue;
-                    else if (oldPort == null)
-                        _log.Info("Enabling {1} on port {0}.".Fmt(newPort, protocol));
-                    else if (newPort == null)
-                        _log.Info("Disabling {1} on port {0}.".Fmt(oldPort, protocol));
-                    else if (oldPort != newPort)
-                        _log.Info("Switching {2} from port {0} to port {1}.".Fmt(oldPort, newPort, protocol));
-                }
+                    if (removed.Length > 0)
+                        _log.Info("Disabling {0}".Fmt(removed.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port))));
+                    if (added.Length > 0)
+                        _log.Info("Enabling {0}".Fmt(added.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port))));
 
-                if (_server == null)
-                    _server = new HttpServer
-                    {
-                        Options = newSettings.ServerOptions,
-                        ErrorHandler = errorHandler,
-                        ResponseExceptionHandler = responseExceptionHandler
-                    };
-                else
-                    _server.StopListening();
-                startListening = true;
+                    if (_server == null)
+                        _server = new HttpServer
+                        {
+                            Options = newSettings.ServerOptions,
+                            ErrorHandler = errorHandler,
+                            ResponseExceptionHandler = responseExceptionHandler
+                        };
+                    else
+                        _server.StopListening();
+                    startListening = true;
+                }
             }
 
             CurrentSettings = newSettings;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
@@ -30,7 +31,6 @@ namespace RT.PropellerApi
                     Settings = new JsonDict(),
                     Hooks = Ut.NewArray(new UrlHook(domain: "localhost", protocols: Protocols.All))
                 });
-                settings.SaveLoud(settingsPath);
             }
 
             if (settings.Modules.Length != 1)
@@ -66,11 +66,8 @@ namespace RT.PropellerApi
                 log.Info("Module URLs: " + settings.Modules[0].Hooks.JoinString("; "));
             }
 
-            if (settings.ServerOptions.Port != null)
-                log.Info("Starting server on port {0} (HTTP).".Fmt(settings.ServerOptions.Port));
-            if (settings.ServerOptions.SecurePort != null)
-                log.Info("Starting server on port {0} (HTTPS).".Fmt(settings.ServerOptions.SecurePort));
-
+            log.Info("Starting server on {0}.".Fmt(settings.ServerOptions.Endpoints.Select(ep => "port " + ep.Value.Port + (ep.Value.Secure ? " (HTTPS)" : " (HTTP)")).JoinString(", ")));
+            settings.Save(settingsPath);
             server.StartListening(true);
         }
 
