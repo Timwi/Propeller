@@ -47,17 +47,18 @@ namespace RT.Propeller
 
             // If either port number or the bind-to address have changed, stop and restart the server’s listener.
             var startListening = false;
+
             if (_server == null || CurrentSettings == null ||
                 !CurrentSettings.ServerOptions.Endpoints.Values.SequenceEqual(newSettings.ServerOptions.Endpoints.Values))
             {
-                var removed = CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
-                var added = newSettings.ServerOptions.Endpoints.Values.Except(CurrentSettings.ServerOptions.Endpoints.Values).ToArray();
+                var removed = CurrentSettings == null ? new HttpEndpoint[0] : CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
+                var added = CurrentSettings == null ? newSettings.ServerOptions.Endpoints.Values.ToArray() : newSettings.ServerOptions.Endpoints.Values.Except(CurrentSettings.ServerOptions.Endpoints.Values).ToArray();
                 if (removed.Length > 0 || added.Length > 0)
                 {
                     if (removed.Length > 0)
-                        _log.Info("Disabling {0}".Fmt(removed.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port))));
+                        _log.Info("Disabling {0}".Fmt(removed.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port)).JoinString(", ", lastSeparator: " and ")));
                     if (added.Length > 0)
-                        _log.Info("Enabling {0}".Fmt(added.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port))));
+                        _log.Info("Enabling {0}".Fmt(added.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port)).JoinString(", ", lastSeparator: " and ")));
 
                     if (_server == null)
                         _server = new HttpServer
