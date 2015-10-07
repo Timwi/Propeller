@@ -53,7 +53,7 @@ namespace RT.Propeller
             {
                 var removed = CurrentSettings == null ? new HttpEndpoint[0] : CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
                 var added = CurrentSettings == null ? newSettings.ServerOptions.Endpoints.Values.ToArray() : newSettings.ServerOptions.Endpoints.Values.Except(CurrentSettings.ServerOptions.Endpoints.Values).ToArray();
-                if (removed.Length > 0 || added.Length > 0)
+                if (_server == null || removed.Length > 0 || added.Length > 0)
                 {
                     if (removed.Length > 0)
                         _log.Info("Disabling {0}".Fmt(removed.Select(ep => "HTTP{0} on port {1}".Fmt(ep.Secure ? "S" : null, ep.Port)).JoinString(", ", lastSeparator: " and ")));
