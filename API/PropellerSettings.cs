@@ -1,5 +1,6 @@
 ﻿using RT.Servers;
 using RT.Util;
+using RT.Util.ExtensionMethods;
 using RT.Util.Json;
 using RT.Util.Serialization;
 
@@ -71,5 +72,11 @@ namespace RT.PropellerApi
 
         /// <summary>Settings for this module. (Stored as JSON and passed to the module to be deserialized there.)</summary>
         public JsonValue Settings = null;
+
+        /// <summary>Overrides <c>object.Tostring()</c>.</summary>
+        public override string ToString()
+        {
+            return "{{Settings for {0}{1}}}".Fmt(ModuleName, ModuleType == null ? "" : " ({0})".Fmt(ModuleType));
+        }
     }
 }
