@@ -80,12 +80,19 @@ namespace RT.Propeller
             foreach (var module in newSettings.Modules)
             {
                 _log.Info("Initializing module: " + module.ModuleName);
-                var inf = new AppDomainInfo(_log, newSettings, module, new SettingsSaver(s =>
+                try
                 {
-                    module.Settings = s;
-                    _settingsSavedByModule = true;
-                }));
-                newAppDomains.Add(inf);
+                    var inf = new AppDomainInfo(_log, newSettings, module, new SettingsSaver(s =>
+                    {
+                        module.Settings = s;
+                        _settingsSavedByModule = true;
+                    }));
+                    newAppDomains.Add(inf);
+                }
+                catch (Exception e)
+                {
+                    _log.Error("Failed to initialize module {0}: {1} ({2}).".Fmt(module.ModuleName, e.Message, e.GetType().FullName));
+                }
             }
 
             // Switcheroo!
@@ -105,7 +112,7 @@ namespace RT.Propeller
             HashSet<string> tempFoldersInUse;
             lock (_lockObject)
                 tempFoldersInUse = _activeAppDomains.Concat(_inactiveAppDomains).Select(ad => ad.TempPathUsed).ToHashSet();
-            foreach (var tempFolder in Directory.EnumerateDirectories(CurrentSettings.TempFolder, "propeller-tmp-*"))
+            foreach (var tempFolder in Directory.EnumerateDirectories(CurrentSettings.TempFolder ?? Path.GetTempPath(), "propeller-tmp-*"))
             {
                 if (tempFoldersInUse.Contains(tempFolder))
                     continue;
