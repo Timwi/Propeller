@@ -91,7 +91,8 @@ namespace RT.Propeller
                 }
                 catch (Exception e)
                 {
-                    _log.Error("Failed to initialize module {0}: {1} ({2}).".Fmt(module.ModuleName, e.Message, e.GetType().FullName));
+                    _log.Error("Failed to initialize module {0}:".Fmt(module.ModuleName));
+                    _log.Exception(e);
                 }
             }
 
