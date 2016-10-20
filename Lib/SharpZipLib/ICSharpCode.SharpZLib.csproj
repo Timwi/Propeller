@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" xmlns:Conversion="urn:Conversion" ToolsVersion="3.5">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
@@ -9,35 +9,16 @@
     <AssemblyName>ICSharpCode.SharpZipLib</AssemblyName>
     <OutputType>Library</OutputType>
     <ApplicationIcon />
-    <WarningLevel>4</WarningLevel>
     <StartupObject />
     <NoStdLib>False</NoStdLib>
     <NoConfig>False</NoConfig>
     <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
     <PreBuildEvent />
     <PostBuildEvent />
-    <FileUpgradeFlags></FileUpgradeFlags>
-    <UpgradeBackupLocation></UpgradeBackupLocation>
-    <OldToolsVersion>2.0</OldToolsVersion>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <PublishUrl>http://localhost/ICSharpCode.SharpZipLib/</PublishUrl>
-    <Install>true</Install>
-    <InstallFrom>Web</InstallFrom>
-    <UpdateEnabled>true</UpdateEnabled>
-    <UpdateMode>Foreground</UpdateMode>
-    <UpdateInterval>7</UpdateInterval>
-    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
-    <UpdatePeriodically>false</UpdatePeriodically>
-    <UpdateRequired>false</UpdateRequired>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>true</IsWebBootstrapper>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <OutputPath>..\..\Builds\$(Configuration)</OutputPath>
-    <IntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)</BaseIntermediateOutputPath>
+    <OutputPath>..\..\Builds\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
     <DocumentationFile>..\..\Builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -131,24 +112,6 @@
     <Compile Include="Core\StreamUtils.cs" />
     <Compile Include="Zip\ZipEntryFactory.cs" />
     <Compile Include="Zip\IEntryFactory.cs" />
-  </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
