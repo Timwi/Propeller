@@ -53,7 +53,7 @@ namespace RT.PropellerApi
                 catch (Exception e)
                 {
                     log.Error("Error saving settings for module {0}:".Fmt(settings.Modules[0].ModuleName));
-                    PropellerUtil.LogException(log, e);
+                    LogException(log, e);
                 }
             }));
 
