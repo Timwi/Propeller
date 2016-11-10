@@ -19,6 +19,14 @@ namespace RT.PropellerApi
         /// <summary>When overridden in a derived class, returns the human-readable name of the module.</summary>
         public abstract string Name { get; }
 
+        private ISettingsSaver SettingsSaver;
+
+        /// <summary>Saves the settings stored in <see cref="Settings"/>.</summary>
+        protected void SaveSettings()
+        {
+            SettingsSaver.SaveSettings(ClassifyJson.Serialize(Settings));
+        }
+
         /// <summary>
         ///     Gets or sets the module’s current settings.</summary>
         /// <remarks>
@@ -27,8 +35,9 @@ namespace RT.PropellerApi
 
         void IPropellerModule.Init(LoggerBase log, JsonValue settings, ISettingsSaver saver)
         {
+            SettingsSaver = saver;
             Settings = ClassifyJson.Deserialize<TSettings>(settings) ?? new TSettings();
-            saver.SaveSettings(ClassifyJson.Serialize(Settings));
+            SaveSettings();
             Init(log);
         }
 
