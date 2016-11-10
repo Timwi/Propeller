@@ -1,17 +1,22 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Propeller", "Src\Propeller.csproj", "{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Util", "..\RT.Util\Src\RT.Util.csproj", "{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RT.Util", "..\RT.Util\Src\RT.Util.csproj", "{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Servers", "..\RT.Servers\Src\RT.Servers.csproj", "{A7333C19-56A9-4A8E-A196-7648666EF26A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RT.Servers", "..\RT.Servers\Src\RT.Servers.csproj", "{A7333C19-56A9-4A8E-A196-7648666EF26A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropellerApi", "API\PropellerApi.csproj", "{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "..\RT.SelfService\Src\RT.SelfService.csproj", "{2D690226-CE76-4261-8778-87F7C213836A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RT.SelfService", "..\RT.SelfService\Src\RT.SelfService.csproj", "{2D690226-CE76-4261-8778-87F7C213836A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TagSoup", "..\RT.TagSoup\Src\RT.TagSoup.csproj", "{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RT.TagSoup", "..\RT.TagSoup\Src\RT.TagSoup.csproj", "{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileServer", "Src\Modules\FileServer\FileServer.csproj", "{9BE86A9C-7A29-495A-977B-E8DD881A34B1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Redirector", "Src\Modules\Redirector\Redirector.csproj", "{19010B43-7871-4BFA-83F5-AB4504D164D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,6 +48,14 @@ Global
 		{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F80D916-8999-45D8-ACB2-FFA7E2698FD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BE86A9C-7A29-495A-977B-E8DD881A34B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BE86A9C-7A29-495A-977B-E8DD881A34B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BE86A9C-7A29-495A-977B-E8DD881A34B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BE86A9C-7A29-495A-977B-E8DD881A34B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19010B43-7871-4BFA-83F5-AB4504D164D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19010B43-7871-4BFA-83F5-AB4504D164D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19010B43-7871-4BFA-83F5-AB4504D164D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19010B43-7871-4BFA-83F5-AB4504D164D2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{19010B43-7871-4BFA-83F5-AB4504D164D2}</ProjectGuid>
+    <ProjectGuid>{9BE86A9C-7A29-495A-977B-E8DD881A34B1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RT.Propeller.Modules</RootNamespace>
