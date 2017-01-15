@@ -59,13 +59,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj">
+      <Project>{2d690226-ce76-4261-8778-87f7c213836a}</Project>
+      <Name>RT.SelfService</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
       <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
       <Name>Servers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj">
-      <Project>{2D690226-CE76-4261-8778-87F7C213836A}</Project>
-      <Name>Services</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
