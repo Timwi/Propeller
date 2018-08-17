@@ -129,7 +129,7 @@ namespace RT.Propeller
             lock (_log)
             {
                 if (req != null && resp != null)
-                    _log.Error("Error in response for request {0} from {1}, status code {2}:".Fmt(req.Url.ToFull(), req.SourceIP, (int) resp.Status));
+                    _log.Error("Error in response for request {0}, status code {1}:".Fmt(req.Url.ToFull(), (int) resp.Status));
                 PropellerUtil.LogException(_log, exception);
             }
         }
@@ -139,13 +139,13 @@ namespace RT.Propeller
             exception.IfType(
                 (HttpException httpExc) =>
                 {
-                    _log.Info("Request {0} from {1} failure code {2}.".Fmt(req.Url.ToFull(), req.SourceIP, (int) httpExc.StatusCode));
+                    _log.Info("Request {0} failure code {1}.".Fmt(req.Url.ToFull(), (int) httpExc.StatusCode));
                 },
                 exc =>
                 {
                     lock (_log)
                     {
-                        _log.Error("Error in handler for request {0} from {1}:".Fmt(req.Url.ToFull(), req.SourceIP));
+                        _log.Error("Error in handler for request {0}:".Fmt(req.Url.ToFull()));
                         PropellerUtil.LogException(_log, exception);
                     }
                 });
