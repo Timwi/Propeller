@@ -65,11 +65,11 @@
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
       <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
-      <Name>Servers</Name>
+      <Name>RT.Servers</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
-      <Name>Util</Name>
+      <Name>RT.Util</Name>
     </ProjectReference>
     <ProjectReference Include="..\API\PropellerApi.csproj">
       <Project>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</Project>
