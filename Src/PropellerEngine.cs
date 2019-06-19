@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
-using RT.Propeller;
+using System.Linq;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
@@ -21,7 +16,7 @@ namespace RT.Propeller
 
         public PropellerSettings CurrentSettings { get; private set; }
 
-        private object _lockObject = new object();
+        private readonly object _lockObject = new object();
         private string _settingsPath;
         private bool _settingsSavedByModule = false;
         private DateTime _settingsLastChangedTime = DateTime.MinValue;
@@ -136,19 +131,16 @@ namespace RT.Propeller
 
         private HttpResponse errorHandler(HttpRequest req, Exception exception)
         {
-            exception.IfType(
-                (HttpException httpExc) =>
+            if (exception is HttpException httpExc)
+                _log.Info("Request {0} failure code {1}.".Fmt(req.Url.ToFull(), (int) httpExc.StatusCode));
+            else
+            {
+                lock (_log)
                 {
-                    _log.Info("Request {0} failure code {1}.".Fmt(req.Url.ToFull(), (int) httpExc.StatusCode));
-                },
-                exc =>
-                {
-                    lock (_log)
-                    {
-                        _log.Error("Error in handler for request {0}:".Fmt(req.Url.ToFull()));
-                        PropellerUtil.LogException(_log, exception);
-                    }
-                });
+                    _log.Error("Error in handler for request {0}:".Fmt(req.Url.ToFull()));
+                    PropellerUtil.LogException(_log, exception);
+                }
+            }
             throw exception;
         }
 
