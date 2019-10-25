@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util.ExtensionMethods;
-using RT.Util.Serialization;
+using RT.Serialization;
 
 [assembly: AssemblyTitle("Redirector")]
 [assembly: AssemblyDescription("Provides a Propeller module that simply redirects to another URL.")]

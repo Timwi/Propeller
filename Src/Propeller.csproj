@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RT.Propeller</RootNamespace>
     <AssemblyName>Propeller</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <OutputPath>..\Builds\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
@@ -67,7 +67,27 @@
       <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
       <Name>RT.Servers</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
+    <ProjectReference Include="..\..\RT.Util\RT.Json\RT.Json.csproj">
+      <Project>{9d80d6f7-5f6b-4c83-8a6e-1465472eeb23}</Project>
+      <Name>RT.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.PostBuild\RT.PostBuild.csproj">
+      <Project>{6ffda4f3-a4cd-41d0-abb4-9f2719930f6a}</Project>
+      <Name>RT.PostBuild</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Json\RT.Serialization.Json.csproj">
+      <Project>{94e548da-405d-47e9-991e-5f62513755c8}</Project>
+      <Name>RT.Serialization.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization\RT.Serialization.csproj">
+      <Project>{95a836d9-9556-4e7c-af10-d862b5ae65b8}</Project>
+      <Name>RT.Serialization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj">
+      <Project>{585dc183-b3b7-4bdd-8c21-e9b90c02db7a}</Project>
+      <Name>RT.Util.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Util\RT.Util.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
       <Name>RT.Util</Name>
     </ProjectReference>

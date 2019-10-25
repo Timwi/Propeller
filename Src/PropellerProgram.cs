@@ -2,8 +2,8 @@
 using System.Linq;
 using System.ServiceProcess;
 using System.Threading;
+using RT.PostBuild;
 using RT.Services;
-using RT.Util;
 using RT.Util.CommandLine;
 using RT.Util.ExtensionMethods;
 
@@ -14,7 +14,7 @@ namespace RT.Propeller
         public static int Main(string[] args)
         {
             if (args.Length == 2 && args[0] == "--post-build-check")
-                return Ut.RunPostBuildChecks(args[1], System.Reflection.Assembly.GetExecutingAssembly());
+                return PostBuildChecker.RunPostBuildChecks(args[1], System.Reflection.Assembly.GetExecutingAssembly());
 
             CommandLine cmdLine;
             try

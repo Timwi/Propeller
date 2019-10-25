@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RT.PropellerApi</RootNamespace>
     <AssemblyName>PropellerApi</AssemblyName>
-    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <OutputPath>..\Builds\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
@@ -56,13 +56,29 @@
       <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
       <Name>RT.Servers</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\Src\RT.Util.csproj">
+    <ProjectReference Include="..\..\RT.Util\RT.Json\RT.Json.csproj">
+      <Project>{ee88e456-4ab7-4c38-9269-32dbf0dd617e}</Project>
+      <Name>RT.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Json\RT.Serialization.Json.csproj">
+      <Project>{a8bfb98e-68bd-480e-9205-889480b31976}</Project>
+      <Name>RT.Serialization.Json</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization\RT.Serialization.csproj">
+      <Project>{f2878b44-81b5-4183-98c2-47643645d328}</Project>
+      <Name>RT.Serialization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj">
       <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
+      <Name>RT.Util.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\RT.Util\RT.Util\RT.Util.csproj">
+      <Project>{b8f9d243-03a6-475f-b237-bbbec6ca3b14}</Project>
       <Name>RT.Util</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
