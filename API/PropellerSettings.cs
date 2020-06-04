@@ -68,7 +68,7 @@ namespace RT.PropellerApi
 
         /// <summary>The URL hooks to hook this module to.</summary>
         [ClassifyNotNull]
-        public UrlHook[] Hooks = new UrlHook[] { new UrlHook(domain: "mymodule.com", path: "/mymodule") };
+        public UrlHook[] Hooks = new UrlHook[] { new UrlHook() };
 
         /// <summary>Settings for this module. (Stored as JSON and passed to the module to be deserialized there.)</summary>
         public JsonValue Settings = null;
