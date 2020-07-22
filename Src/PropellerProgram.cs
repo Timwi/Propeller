@@ -2,9 +2,9 @@
 using System.Linq;
 using System.ServiceProcess;
 using System.Threading;
+using RT.CommandLine;
 using RT.PostBuild;
 using RT.Services;
-using RT.Util.CommandLine;
 using RT.Util.ExtensionMethods;
 
 namespace RT.Propeller

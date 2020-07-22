@@ -1,5 +1,5 @@
-﻿using RT.PostBuild;
-using RT.Util.CommandLine;
+﻿using RT.CommandLine;
+using RT.PostBuild;
 
 namespace RT.Propeller
 {
