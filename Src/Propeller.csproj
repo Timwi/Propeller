@@ -32,6 +32,46 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="RT.CommandLine, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.CommandLine.2.0.1668\lib\netstandard2.0\RT.CommandLine.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Json, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Json.2.0.1668\lib\netstandard2.0\RT.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Lingo.Base, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Lingo.Base.2.0.1668\lib\netstandard2.0\RT.Lingo.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.PostBuild, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.PostBuild.2.0.1668\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.SelfService, Version=1.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.SelfService.1.0.4\lib\net471\RT.SelfService.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Serialization, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Serialization.2.0.1668\lib\netstandard2.0\RT.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Serialization.Binary, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Serialization.Binary.2.0.1668\lib\netstandard2.0\RT.Serialization.Binary.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Serialization.Json, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Serialization.Json.2.0.1668\lib\netstandard2.0\RT.Serialization.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Serialization.Xml, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Serialization.Xml.2.0.1668\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Servers, Version=1.0.1641.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Servers.1.0.1641\lib\net472\RT.Servers.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.TagSoup, Version=1.0.1621.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.TagSoup.1.0.1621\lib\net471\RT.TagSoup.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Util, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Util.2.0.1668\lib\net472\RT.Util.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Util.Core, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Util.Core.2.0.1668\lib\netstandard2.0\RT.Util.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -59,50 +99,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj">
-      <Project>{2d690226-ce76-4261-8778-87f7c213836a}</Project>
-      <Name>RT.SelfService</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
-      <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
-      <Name>RT.Servers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.CommandLine\RT.CommandLine.csproj">
-      <Project>{D95690B4-CB6F-491C-9A69-1ADECFF7EDE2}</Project>
-      <Name>RT.CommandLine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Json\RT.Json.csproj">
-      <Project>{9d80d6f7-5f6b-4c83-8a6e-1465472eeb23}</Project>
-      <Name>RT.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Lingo.Base\RT.Lingo.Base.csproj">
-      <Project>{2B55B7D1-9004-45E2-A017-E8309AC34F75}</Project>
-      <Name>RT.Lingo.Base</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.PostBuild\RT.PostBuild.csproj">
-      <Project>{6ffda4f3-a4cd-41d0-abb4-9f2719930f6a}</Project>
-      <Name>RT.PostBuild</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Json\RT.Serialization.Json.csproj">
-      <Project>{94e548da-405d-47e9-991e-5f62513755c8}</Project>
-      <Name>RT.Serialization.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Serialization\RT.Serialization.csproj">
-      <Project>{95a836d9-9556-4e7c-af10-d862b5ae65b8}</Project>
-      <Name>RT.Serialization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj">
-      <Project>{585dc183-b3b7-4bdd-8c21-e9b90c02db7a}</Project>
-      <Name>RT.Util.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\RT.Util\RT.Util\RT.Util.csproj">
-      <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
-      <Name>RT.Util</Name>
-    </ProjectReference>
     <ProjectReference Include="..\API\PropellerApi.csproj">
       <Project>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</Project>
       <Name>PropellerApi</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

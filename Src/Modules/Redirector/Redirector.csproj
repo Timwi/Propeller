@@ -31,6 +31,21 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="RT.PostBuild, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.PostBuild.2.0.1668\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Serialization, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Serialization.2.0.1668\lib\netstandard2.0\RT.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Servers, Version=1.0.1632.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Servers.1.0.1632\lib\net471\RT.Servers.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.TagSoup, Version=1.0.1610.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.TagSoup.1.0.1610.0\lib\net40-Client\RT.TagSoup.dll</HintPath>
+    </Reference>
+    <Reference Include="RT.Util, Version=1.0.1574.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Util.1.0.1574\lib\net45\RT.Util.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,26 +58,6 @@
     <Compile Include="Redirector.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\RT.Servers\Src\RT.Servers.csproj">
-      <Project>{a7333c19-56a9-4a8e-a196-7648666ef26a}</Project>
-      <Name>Servers</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\RT.Util\RT.Json\RT.Json.csproj">
-      <Project>{9d80d6f7-5f6b-4c83-8a6e-1465472eeb23}</Project>
-      <Name>RT.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\RT.Util\RT.Serialization.Json\RT.Serialization.Json.csproj">
-      <Project>{94e548da-405d-47e9-991e-5f62513755c8}</Project>
-      <Name>RT.Serialization.Json</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\RT.Util\RT.Serialization\RT.Serialization.csproj">
-      <Project>{95a836d9-9556-4e7c-af10-d862b5ae65b8}</Project>
-      <Name>RT.Serialization</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\..\RT.Util\RT.Util\RT.Util.csproj">
-      <Project>{8d0fe79c-ad8d-475c-9e6f-9cae85365b5d}</Project>
-      <Name>Util</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\API\PropellerApi.csproj">
       <Project>{5770ee79-8340-41fb-9b8e-eb4a3c487ff1}</Project>
       <Name>PropellerApi</Name>
@@ -70,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

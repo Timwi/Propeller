@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>RT.PropellerApi</id>
+    <version>$version$</version>
+    <title>RT.PropellerApi</title>
+    <authors>Timwi</authors>
+    <owners>Timwi</owners>
+    <projectUrl>https://github.com/Timwi/Propeller</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>The client API required to write modules for the HTTP server Propeller.</description>
+    <copyright>Copyright 2020 Timwi</copyright>
+    <tags>C# Http Server</tags>
+    <dependencies>
+      <dependency id="RT.Json" />
+      <dependency id="RT.Servers" />
+      <dependency id="RT.TagSoup" />
+      <dependency id="RT.Util" />
+    </dependencies>
+  </metadata>
+</package>
