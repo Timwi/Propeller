@@ -1,97 +1,37 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RT.PropellerApi</RootNamespace>
-    <AssemblyName>RT.PropellerApi</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <OutputPath>..\Builds\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\Builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
-    <DocumentationFile>..\Builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFramework>net472</TargetFramework>
+    <OutputPath>..\..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
+    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <Configurations>Debug;Release</Configurations>
+
+    <Version>1.0.0.9999</Version>
+    <Authors>Timwi</Authors>
+    <Description>The client API required to write modules for the HTTP server Propeller.</Description>
+    <PackageTags>C#;Http;Server</PackageTags>
+
+    <RepositoryUrl>https://github.com/Timwi/Propeller</RepositoryUrl>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE</DefineConstants>
-    <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>..\Builds\Release\RT.PropellerApi.xml</DocumentationFile>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="RT.Json" version="2.0.1668" />
+    <PackageReference Include="RT.PostBuild" version="2.0.1668" />
+    <PackageReference Include="RT.Serialization" version="2.0.1668" />
+    <PackageReference Include="RT.Serialization.Binary" version="2.0.1668" />
+    <PackageReference Include="RT.Serialization.Json" version="2.0.1668" />
+    <PackageReference Include="RT.Serialization.Xml" version="2.0.1668" />
+    <PackageReference Include="RT.Servers" version="1.0.1641" />
+    <PackageReference Include="RT.TagSoup" version="1.0.1621" />
+    <PackageReference Include="RT.Util" version="2.0.1668" />
+    <PackageReference Include="RT.Util.Core" version="2.0.1668" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="RT.Json, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Json.2.0.1668\lib\netstandard2.0\RT.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.PostBuild, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.PostBuild.2.0.1668\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.2.0.1668\lib\netstandard2.0\RT.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Binary, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Binary.2.0.1668\lib\netstandard2.0\RT.Serialization.Binary.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Json, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Json.2.0.1668\lib\netstandard2.0\RT.Serialization.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Xml, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Xml.2.0.1668\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Servers, Version=1.0.1641.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Servers.1.0.1641\lib\net472\RT.Servers.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.TagSoup, Version=1.0.1621.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.TagSoup.1.0.1621\lib\net471\RT.TagSoup.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Util, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Util.2.0.1668\lib\net472\RT.Util.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Util.Core, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Util.Core.2.0.1668\lib\netstandard2.0\RT.Util.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="IPropellerModule.cs" />
-    <Compile Include="ISettingsSaver.cs" />
-    <Compile Include="PropellerSettings.cs" />
-    <Compile Include="PropellerUtil.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SettingsSaver.cs" />
-    <Compile Include="PropellerModuleBase.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>
