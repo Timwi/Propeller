@@ -53,7 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj">
-      <Project>{A7333C19-56A9-4A8E-A196-7648666EF26A}</Project>
+      <Project>{a7333c19-56a9-4a8e-a196-7648666ef26a}</Project>
       <Name>RT.Servers</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\RT.Json\RT.Json.csproj">
@@ -69,11 +69,11 @@
       <Name>RT.Serialization</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj">
-      <Project>{8D0FE79C-AD8D-475C-9E6F-9CAE85365B5D}</Project>
+      <Project>{585dc183-b3b7-4bdd-8c21-e9b90c02db7a}</Project>
       <Name>RT.Util.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\RT.Util\RT.Util\RT.Util.csproj">
-      <Project>{b8f9d243-03a6-475f-b237-bbbec6ca3b14}</Project>
+      <Project>{8d0fe79c-ad8d-475c-9e6f-9cae85365b5d}</Project>
       <Name>RT.Util</Name>
     </ProjectReference>
   </ItemGroup>
