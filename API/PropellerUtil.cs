@@ -18,7 +18,10 @@ namespace RT.PropellerApi
         /// <param name="settingsPath">
         ///     Path and filename of the Propeller settings file. This file must contain a Propeller configuration containing
         ///     exactly one module configuration.</param>
-        public static void RunStandalone(string settingsPath, IPropellerModule module)
+        /// <param name="propagateExceptions">
+        ///     Specifies whether exceptions get propagated to the debugger. Setting this to <c>true</c> will cause exceptions
+        ///     to bring down the server, so only do this when debugging.</param>
+        public static void RunStandalone(string settingsPath, IPropellerModule module, bool propagateExceptions = false)
         {
             var settings = LoadSettings(settingsPath, new ConsoleLogger(), true);
 
@@ -40,10 +43,7 @@ namespace RT.PropellerApi
             log.Info("Running Propeller module {0} in standalone mode.".Fmt(module.Name));
 
             var resolver = new UrlResolver();
-            var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle };
-#if DEBUG
-            server.PropagateExceptions = true;
-#endif
+            var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle, PropagateExceptions = propagateExceptions };
             var pretendPluginPath = PathUtil.AppPathCombine(module.Name + ".dll");
 
             module.Init(log, settings.Modules[0].Settings, new SettingsSaver(s =>
