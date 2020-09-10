@@ -6,7 +6,7 @@ namespace RT.PropellerApi
     /// <summary>Provides a simple implementation for the <see cref="ISettingsSaver"/> interface.</summary>
     public sealed class SettingsSaver : MarshalByRefObject, ISettingsSaver
     {
-        private Action<JsonValue> _saver;
+        private readonly Action<JsonValue> _saver;
 
         /// <summary>
         ///     Constructor.</summary>
@@ -14,9 +14,7 @@ namespace RT.PropellerApi
         ///     Delegate that saves the settings.</param>
         public SettingsSaver(Action<JsonValue> saver)
         {
-            if (saver == null)
-                throw new ArgumentNullException("saver");
-            _saver = saver;
+            _saver = saver ?? throw new ArgumentNullException(nameof(saver));
         }
 
         /// <summary>
@@ -25,7 +23,8 @@ namespace RT.PropellerApi
         ///     Settings to save.</param>
         public void SaveSettings(JsonValue settings)
         {
-            _saver(settings);
+            lock (_saver)
+                _saver(settings);
         }
     }
 }
