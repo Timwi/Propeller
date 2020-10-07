@@ -60,8 +60,8 @@
     <Reference Include="RT.Serialization.Xml, Version=2.0.1668.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RT.Serialization.Xml.2.0.1668\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Servers, Version=1.0.1655.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Servers.1.0.1655\lib\net472\RT.Servers.dll</HintPath>
+    <Reference Include="RT.Servers, Version=1.0.1660.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RT.Servers.1.0.1660\lib\net472\RT.Servers.dll</HintPath>
     </Reference>
     <Reference Include="RT.TagSoup, Version=1.0.1621.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\RT.TagSoup.1.0.1621\lib\net471\RT.TagSoup.dll</HintPath>
