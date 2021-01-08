@@ -1,4 +1,5 @@
-﻿using RT.Json;
+﻿using System;
+using RT.Json;
 using RT.Serialization;
 using RT.Servers;
 using RT.Util;
@@ -16,6 +17,9 @@ namespace RT.PropellerApi
 
         private ISettingsSaver SettingsSaver;
 
+        /// <summary>Contains the logger provided by Propeller.</summary>
+        protected LoggerBase Log;
+
         /// <summary>Saves the settings stored in <see cref="Settings"/>.</summary>
         protected void SaveSettings()
         {
@@ -31,16 +35,22 @@ namespace RT.PropellerApi
         void IPropellerModule.Init(LoggerBase log, JsonValue settings, ISettingsSaver saver)
         {
             SettingsSaver = saver;
-            Settings = ClassifyJson.Deserialize<TSettings>(settings) ?? new TSettings();
+            Log = log;
+            try
+            {
+                Settings = ClassifyJson.Deserialize<TSettings>(settings) ?? new TSettings();
+            }
+            catch (Exception e)
+            {
+                Log.Exception(e);
+                Settings = new TSettings();
+            }
             SaveSettings();
-            Init(log);
+            Init();
         }
 
-        /// <summary>
-        ///     When overridden in a derived class, initializes the module. The default implementation does nothing.</summary>
-        /// <param name="log">
-        ///     A logger that can be used to log messages in the Propeller log.</param>
-        public virtual void Init(LoggerBase log) { }
+        /// <summary>When overridden in a derived class, initializes the module. The default implementation does nothing.</summary>
+        public virtual void Init() { }
 
         /// <summary>
         ///     When overridden in a derived class, implements <see
