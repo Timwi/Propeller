@@ -23,7 +23,7 @@ namespace RT.Propeller.Modules
 
         private FileSystemHandler Handler;
 
-        public override void Init(LoggerBase log)
+        public override void Init()
         {
             Handler = new FileSystemHandler(Settings.Directory, Settings.Options);
         }
