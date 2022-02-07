@@ -18,16 +18,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="RT.Json" version="2.0.1683" />
-    <PackageReference Include="RT.PostBuild" version="2.0.1683" />
-    <PackageReference Include="RT.Serialization" version="2.0.1683" />
-    <PackageReference Include="RT.Serialization.Binary" version="2.0.1683" />
-    <PackageReference Include="RT.Serialization.Json" version="2.0.1683" />
-    <PackageReference Include="RT.Serialization.Xml" version="2.0.1683" />
-    <PackageReference Include="RT.Servers" version="1.0.1664" />
+    <PackageReference Include="RT.Json" version="2.0.1689" />
+    <PackageReference Include="RT.PostBuild" version="2.0.1689" />
+    <PackageReference Include="RT.Serialization" version="2.0.1689" />
+    <PackageReference Include="RT.Serialization.Binary" version="2.0.1689" />
+    <PackageReference Include="RT.Serialization.Json" version="2.0.1689" />
+    <PackageReference Include="RT.Serialization.Xml" version="2.0.1689" />
+    <PackageReference Include="RT.Servers" version="1.0.1665" />
     <PackageReference Include="RT.TagSoup" version="1.0.1625" />
-    <PackageReference Include="RT.Util" version="2.0.1683" />
-    <PackageReference Include="RT.Util.Core" version="2.0.1683" />
+    <PackageReference Include="RT.Util" version="2.0.1689" />
+    <PackageReference Include="RT.Util.Core" version="2.0.1689" />
   </ItemGroup>
 
   <ItemGroup>
