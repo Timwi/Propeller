@@ -1,4 +1,5 @@
-﻿using RT.Json;
+using System;
+using RT.Json;
 using RT.Serialization;
 using RT.Servers;
 using RT.Util;
@@ -7,8 +8,7 @@ using RT.Util.ExtensionMethods;
 namespace RT.PropellerApi
 {
     /// <summary>Contains settings which are related to the Propeller engine, and not to any individual module.</summary>
-    [Settings("Propeller", SettingsKind.Global, SettingsSerializer.ClassifyJson)]
-    public sealed class PropellerSettings : SettingsBase
+    public sealed class PropellerSettings
     {
         /// <summary>HttpServer configuration.</summary>
         public HttpServerOptions ServerOptions = new HttpServerOptions();
@@ -39,6 +39,9 @@ namespace RT.PropellerApi
         /// <remarks>
         ///     If omitted, <c>Path.GetTempPath()</c> is used.</remarks>
         public string TempFolder = null;
+
+        /// <summary>Saves the settings.</summary>
+        public void Save(string settingsPath) => ClassifyJson.SerializeToFile(this, settingsPath);
     }
 
     /// <summary>Encapsulates the settings pertaining to a module running within Propeller, including its name and URL hooks.</summary>

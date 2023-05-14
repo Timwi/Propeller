@@ -1,6 +1,5 @@
 ﻿using System.ServiceProcess;
 using System.Threading;
-using RT.PropellerApi;
 using RT.Services;
 
 namespace RT.Propeller
@@ -17,7 +16,7 @@ namespace RT.Propeller
         {
             ServiceName = "PropellerService";
             ServiceDisplayName = "PropellerService";
-            ServiceDescription = "Provides powerful, flexible HTTP-based functionality on global enterprise systems by leveraging dynamic API synergy through an extensible architecture.";
+            ServiceDescription = "Provides powerful, flexible and secure HTTP-based functionality on global enterprise systems by leveraging dynamic API synergy through an extensible architecture.";
             ServiceStartMode = ServiceStartMode.Manual;
         }
 

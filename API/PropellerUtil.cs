@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using RT.Json;
+using RT.Serialization;
 using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
@@ -82,42 +83,37 @@ namespace RT.PropellerApi
         ///     Adjusts the log messages for improved human readability.</param>
         public static PropellerSettings LoadSettings(string settingsPath, LoggerBase log, bool firstRunEver)
         {
-            settingsPath = settingsPath ?? SettingsUtil.GetAttribute<PropellerSettings>().GetFileName();
             log.Info((firstRunEver ? "Loading settings file: " : "Reloading settings file: ") + settingsPath);
 
             PropellerSettings settings;
-            var success = false;
 
-            try
-            {
-                success = SettingsUtil.LoadSettings(out settings, settingsPath);
-                if (success)
-                {
-                    settings.SaveQuiet(settingsPath);
-                    return settings;
-                }
-            }
-            catch (Exception e)
+            if (!File.Exists(settingsPath))
             {
                 settings = new PropellerSettings();
-                log.Error("Settings file could not be loaded: {0} ({1}). Using default settings.".Fmt(e.Message, e.GetType().FullName));
-            }
-
-            if (!success)
-            {
-                if (!File.Exists(settingsPath))
+                try
                 {
-                    try
-                    {
-                        settings.Save(settingsPath);
-                        log.Info("Default settings saved to {0}.".Fmt(settingsPath));
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Warn("Attempt to save default settings to {0} failed: {1} ({2})".Fmt(settingsPath, ex.Message, ex.GetType().FullName));
-                    }
+                    settings.Save(settingsPath);
+                    log.Info("Default settings saved to {0}.".Fmt(settingsPath));
+                }
+                catch (Exception ex)
+                {
+                    log.Warn("Attempt to save default settings to {0} failed: {1} ({2})".Fmt(settingsPath, ex.Message, ex.GetType().FullName));
                 }
             }
+            else
+            {
+                try
+                {
+                    settings = ClassifyJson.DeserializeFile<PropellerSettings>(settingsPath);
+                    try { settings.Save(settingsPath); } catch { }
+                }
+                catch (Exception e)
+                {
+                    settings = new PropellerSettings();
+                    log.Error("Settings file could not be loaded: {0} ({1}). Using default settings.".Fmt(e.Message, e.GetType().FullName));
+                }
+            }
+
             return settings;
         }
 

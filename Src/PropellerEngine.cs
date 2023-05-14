@@ -205,7 +205,7 @@ namespace RT.Propeller
                 {
                     // Ask the runner if it has active connections; if this throws, it’s in a broken state anyway, so unload it by force.
                     bool disposeAllowed;
-                    try { disposeAllowed = inactive.HasActiveConnections; }
+                    try { disposeAllowed = !inactive.HasActiveConnections; }
                     catch { disposeAllowed = true; }
 
                     if (disposeAllowed)
@@ -233,7 +233,7 @@ namespace RT.Propeller
 
         public void Start(string settingsPath, bool backgroundThread = false)
         {
-            _settingsPath = settingsPath ?? SettingsUtil.GetAttribute<PropellerSettings>().GetFileName();
+            _settingsPath = settingsPath;
 
             // Do one reinitialization outside of the periodic schedule so that if the first initialization fails, the service doesn’t start
             try
