@@ -31,29 +31,29 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="RT.Json, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Json.2.0.1689\lib\netstandard2.0\RT.Json.dll</HintPath>
+    <Reference Include="RT.Json, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Json.2.0.1742\lib\netstandard2.0\RT.Json.dll</HintPath>
     </Reference>
-    <Reference Include="RT.PostBuild, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.PostBuild.2.0.1689\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
+    <Reference Include="RT.PostBuild, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.PostBuild.2.0.1742\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Serialization, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Serialization.2.0.1689\lib\netstandard2.0\RT.Serialization.dll</HintPath>
+    <Reference Include="RT.Serialization, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Serialization.2.0.1742\lib\netstandard2.0\RT.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Serialization.Json, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Serialization.Json.2.0.1689\lib\netstandard2.0\RT.Serialization.Json.dll</HintPath>
+    <Reference Include="RT.Serialization.Json, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Serialization.Json.2.0.1742\lib\netstandard2.0\RT.Serialization.Json.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Serialization.Xml, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Serialization.Xml.2.0.1689\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
+    <Reference Include="RT.Serialization.Xml, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Serialization.Xml.2.0.1742\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Servers, Version=1.0.1665.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Servers.1.0.1665\lib\net472\RT.Servers.dll</HintPath>
+    <Reference Include="RT.Servers, Version=1.0.1685.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Servers.1.0.1685\lib\netstandard2.0\RT.Servers.dll</HintPath>
     </Reference>
-    <Reference Include="RT.TagSoup, Version=1.0.1625.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.TagSoup.1.0.1625\lib\net472\RT.TagSoup.dll</HintPath>
+    <Reference Include="RT.TagSoup, Version=1.0.1633.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.TagSoup.1.0.1633\lib\netstandard2.0\RT.TagSoup.dll</HintPath>
     </Reference>
-    <Reference Include="RT.Util.Core, Version=2.0.1689.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\RT.Util.Core.2.0.1689\lib\netstandard2.0\RT.Util.Core.dll</HintPath>
+    <Reference Include="RT.Util.Core, Version=2.0.1742.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\RT.Util.Core.2.0.1742\lib\netstandard2.0\RT.Util.Core.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
