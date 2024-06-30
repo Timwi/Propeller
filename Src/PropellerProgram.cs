@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.ServiceProcess;
 using System.Threading;
 using RT.CommandLine;
 using RT.PostBuild;
@@ -50,7 +49,7 @@ namespace RT.Propeller
                     var arguments = "service";
                     if (cmdLine.SettingsPath != null)
                         arguments += @" -s ""{0}""".Fmt(cmdLine.SettingsPath);
-                    serviceProcess.Install(ServiceAccount.NetworkService, arguments);
+                    serviceProcess.Install(Services.ServiceAccount.NetworkService, arguments);
                     break;
 
                 case Action.Uninstall:

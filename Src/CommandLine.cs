@@ -35,7 +35,7 @@ namespace RT.Propeller
 
         private static void PostBuildCheck(IPostBuildReporter rep)
         {
-            CommandLineParser.PostBuildStep<CommandLine>(rep, null);
+            CommandLineParser.PostBuildStep<CommandLine>(rep);
         }
 
         public ConsoleColoredString Validate() =>
