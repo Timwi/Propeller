@@ -11,9 +11,9 @@
     <AssemblyName>FileServer</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <OutputPath>..\..\..\Builds\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
+    <OutputPath>..\..\..\builds\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>..\..\..\builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\..\builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

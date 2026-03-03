@@ -16,10 +16,10 @@
     <PreBuildEvent />
     <PostBuildEvent />
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <OutputPath>..\..\Builds\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\..\Builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
-    <DocumentationFile>..\..\Builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
+    <OutputPath>..\..\builds\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>..\..\builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\..\builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
+    <DocumentationFile>..\..\builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>

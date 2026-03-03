@@ -1,36 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
+    <ProjectGuid>6acaf8e4-0462-2a2d-5cb8-91ada70b2540</ProjectGuid>
     <TargetFramework>net472</TargetFramework>
-    <OutputPath>..\..\Builds\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</OutputPath>
-    <IntermediateOutputPath>$(BaseIntermediateOutputPath)\$(Configuration)-$(TargetFramework)$(RuntimeIdentifier)\</IntermediateOutputPath>
-    <DocumentationFile>$(OutputPath)\$(AssemblyName).xml</DocumentationFile>
+    <OutputPath>..\builds\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
+    <DocumentationFile>..\builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
     <Configurations>Debug;Release</Configurations>
-
     <Version>1.1.0</Version>
     <Authors>Timwi</Authors>
     <Description>The client API required to write modules for the HTTP server Propeller.</Description>
     <PackageTags>C#;Http;Server</PackageTags>
-
     <RepositoryUrl>https://github.com/Timwi/Propeller</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
-  </PropertyGroup>
-
+    <BaseIntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath></PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="RT.Json" version="2.0.1768"/>
-    <PackageReference Include="RT.PostBuild" version="2.0.1768"/>
-    <PackageReference Include="RT.Serialization" version="2.0.1768"/>
-    <PackageReference Include="RT.Serialization.Binary" version="2.0.1768"/>
-    <PackageReference Include="RT.Serialization.Json" version="2.0.1768"/>
-    <PackageReference Include="RT.Serialization.Xml" version="2.0.1768"/>
-    <PackageReference Include="RT.Servers" version="1.0.1691"/>
-    <PackageReference Include="RT.TagSoup" version="1.0.1634"/>
-    <PackageReference Include="RT.Util.Core" version="2.0.1768"/>
+    <PackageReference Include="RT.Json" version="2.0.1768" />
+    <PackageReference Include="RT.PostBuild" version="2.0.1768" />
+    <PackageReference Include="RT.Serialization" version="2.0.1768" />
+    <PackageReference Include="RT.Serialization.Binary" version="2.0.1768" />
+    <PackageReference Include="RT.Serialization.Json" version="2.0.1768" />
+    <PackageReference Include="RT.Serialization.Xml" version="2.0.1768" />
+    <PackageReference Include="RT.Servers" version="1.0.1691" />
+    <PackageReference Include="RT.TagSoup" version="1.0.1634" />
+    <PackageReference Include="RT.Util.Core" version="2.0.1768" />
   </ItemGroup>
-
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp"/>
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
-
 </Project>
