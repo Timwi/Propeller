@@ -12,14 +12,14 @@ namespace RT.Propeller
 
         public PropellerSettings CurrentSettings { get; private set; }
 
-        private readonly object _lockObject = new object();
+        private readonly object _lockObject = new();
         private string _settingsPath;
         private bool _settingsSavedByModule = false;
         private DateTime _settingsLastChangedTime = DateTime.MinValue;
         private HttpServer _server;
         private LoggerBase _log;
-        private HashSet<AppDomainInfo> _activeAppDomains = new HashSet<AppDomainInfo>();
-        private HashSet<AppDomainInfo> _inactiveAppDomains = new HashSet<AppDomainInfo>();
+        private HashSet<PropellerAssemblyLoadContext> _activeAppDomains = [];
+        private readonly HashSet<PropellerAssemblyLoadContext> _inactiveAppDomains = [];
 
         private bool reinitialize()
         {
@@ -42,7 +42,7 @@ namespace RT.Propeller
             if (_server == null || CurrentSettings == null ||
                 !CurrentSettings.ServerOptions.Endpoints.Values.SequenceEqual(newSettings.ServerOptions.Endpoints.Values))
             {
-                var removed = CurrentSettings == null ? new HttpEndpoint[0] : CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
+                var removed = CurrentSettings == null ? [] : CurrentSettings.ServerOptions.Endpoints.Values.Except(newSettings.ServerOptions.Endpoints.Values).ToArray();
                 var added = CurrentSettings == null ? newSettings.ServerOptions.Endpoints.Values.ToArray() : newSettings.ServerOptions.Endpoints.Values.Except(CurrentSettings.ServerOptions.Endpoints.Values).ToArray();
                 if (_server == null || removed.Length > 0 || added.Length > 0)
                 {
@@ -67,13 +67,13 @@ namespace RT.Propeller
             CurrentSettings = newSettings;
 
             // Create a new instance of all the modules
-            var newAppDomains = new HashSet<AppDomainInfo>();
+            var newAppDomains = new HashSet<PropellerAssemblyLoadContext>();
             foreach (var module in newSettings.Modules)
             {
                 _log.Info("Initializing module: " + module.ModuleName);
                 try
                 {
-                    var inf = new AppDomainInfo(_log, newSettings, module, new SettingsSaver(s =>
+                    var inf = new PropellerAssemblyLoadContext(_log, module, new SettingsSaver(s =>
                     {
                         module.Settings = s;
                         _settingsSavedByModule = true;
@@ -90,7 +90,7 @@ namespace RT.Propeller
             // Switcheroo!
             lock (_lockObject)
             {
-                _log.Info("AppDomain Switcheroo");
+                _log.Info("AssemblyLoadContext Switcheroo");
                 _inactiveAppDomains.AddRange(_activeAppDomains);
                 _activeAppDomains = newAppDomains;
                 _server.Options = newSettings.ServerOptions;
@@ -98,18 +98,6 @@ namespace RT.Propeller
                 _server.Log = PropellerUtil.GetLogger(newSettings.HttpAccessLogToConsole, newSettings.HttpAccessLogFile, newSettings.HttpAccessLogVerbosity);
                 if (startListening)
                     _server.StartListening();
-            }
-
-            // Delete any remaining temp folders no longer in use
-            HashSet<string> tempFoldersInUse;
-            lock (_lockObject)
-                tempFoldersInUse = _activeAppDomains.Concat(_inactiveAppDomains).Select(ad => ad.TempPathUsed).ToHashSet();
-            foreach (var tempFolder in Directory.EnumerateDirectories(CurrentSettings.TempFolder ?? Path.GetTempPath(), "propeller-tmp-*"))
-            {
-                if (tempFoldersInUse.Contains(tempFolder))
-                    continue;
-                try { Directory.Delete(tempFolder, recursive: true); }
-                catch { }
             }
 
             return true;
@@ -173,7 +161,7 @@ namespace RT.Propeller
                 }
 
                 // ③ If any module wants to reinitialize, do it
-                AppDomainInfo[] actives;
+                PropellerAssemblyLoadContext[] actives;
                 lock (_lockObject)
                     actives = _activeAppDomains.ToArray();
                 foreach (var active in actives)
@@ -181,7 +169,7 @@ namespace RT.Propeller
                     if (!active.MustReinitialize)   // this adds a log message if it returns true
                         continue;
                     _log.Info("Module says it must reinitialize: {0} ({1})".Fmt(active.ModuleSettings.ModuleName, active.GetHashCode()));
-                    var newAppDomain = new AppDomainInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
+                    var newAppDomain = new PropellerAssemblyLoadContext(_log, active.ModuleSettings, active.Saver);
                     lock (_lockObject)
                     {
                         _inactiveAppDomains.Add(active);
@@ -189,12 +177,12 @@ namespace RT.Propeller
                         _activeAppDomains.Add(newAppDomain);
                         _server.Handler = createResolver().Handle;
                         _log.Info(" --- {0} replaced with {1}, {0} shutting down".Fmt(active.GetHashCode(), newAppDomain.GetHashCode()));
-                        active.RunnerProxy.Shutdown();
+                        active.Module.Shutdown();
                     }
                 }
 
                 // ④ Try to clean up as many inactive AppDomains as possible
-                AppDomainInfo[] inactives;
+                PropellerAssemblyLoadContext[] inactives;
                 lock (_lockObject)
                     inactives = _inactiveAppDomains.ToArray();
                 foreach (var inactive in inactives)
@@ -206,10 +194,10 @@ namespace RT.Propeller
 
                     if (disposeAllowed)
                     {
-                        _log.Info("Disposing inactive module: {0} ({1})".Fmt(inactive.ModuleSettings.ModuleName, inactive.GetHashCode()));
+                        _log.Info("Unloading inactive module: {0} ({1})".Fmt(inactive.ModuleSettings.ModuleName, inactive.GetHashCode()));
                         lock (_lockObject)
                             _inactiveAppDomains.Remove(inactive);
-                        try { inactive.Dispose(); }
+                        try { inactive.DoUnload(); }
                         catch { }
                     }
                     else
@@ -250,23 +238,22 @@ namespace RT.Propeller
         {
             if (!base.Shutdown(true))
                 return false;
-            if (_log != null)
-                _log.Info("Propeller shutting down.");
+            _log?.Info("Propeller shutting down.");
             if (_server != null)
             {
                 _server.StopListening();
                 if (!_server.ShutdownComplete.WaitOne(TimeSpan.FromSeconds(5)))
                     _server.StopListening(brutal: true, blocking: true);
             }
-            foreach (var domain in _activeAppDomains.Concat(_inactiveAppDomains))
+            foreach (var context in _activeAppDomains.Concat(_inactiveAppDomains))
             {
-                domain.RunnerProxy.Shutdown();
-                domain.Dispose();
+                context.Module.Shutdown();
+                context.DoUnload();
             }
             return true;
         }
 
-        protected override TimeSpan FirstInterval { get { return TimeSpan.Zero; } }
+        protected override TimeSpan FirstInterval => TimeSpan.Zero;
 
         public PropellerEngine()
         {
@@ -276,11 +263,11 @@ namespace RT.Propeller
             var checkInterval = TimeSpan.FromSeconds(10);
 #endif
 
-            Tasks = new List<Task>
-            {
+            Tasks =
+            [
                 new Task { Action = logHeartbeat, MinInterval = TimeSpan.FromMinutes(5) },
                 new Task { Action = checkSettingsChanges, MinInterval = checkInterval },
-            };
+            ];
         }
 
         private void logHeartbeat()

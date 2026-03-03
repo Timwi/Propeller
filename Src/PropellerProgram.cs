@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
+﻿using System.Reflection;
 using RT.CommandLine;
 using RT.PostBuild;
 using RT.Services;
@@ -13,7 +11,7 @@ namespace RT.Propeller
         public static int Main(string[] args)
         {
             if (args.Length == 2 && args[0] == "--post-build-check")
-                return PostBuildChecker.RunPostBuildChecks(args[1], System.Reflection.Assembly.GetExecutingAssembly());
+                return PostBuildChecker.RunPostBuildChecks(args[1], Assembly.GetExecutingAssembly());
 
             CommandLine cmdLine;
             try
@@ -36,7 +34,7 @@ namespace RT.Propeller
             switch (cmdLine.Action)
             {
                 case Action.RunAsStandalone:
-                    var thread = new Thread(() => { service.RunAsStandalone(args); });
+                    var thread = new Thread(() => service.RunAsStandalone(args));
                     thread.Start();
                     Console.WriteLine("Running. Press ENTER to exit.");
                     Console.ReadLine();
@@ -49,7 +47,7 @@ namespace RT.Propeller
                     var arguments = "service";
                     if (cmdLine.SettingsPath != null)
                         arguments += @" -s ""{0}""".Fmt(cmdLine.SettingsPath);
-                    serviceProcess.Install(Services.ServiceAccount.NetworkService, arguments);
+                    serviceProcess.Install(ServiceAccount.NetworkService, arguments);
                     break;
 
                 case Action.Uninstall:

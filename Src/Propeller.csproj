@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="&quot;$(TargetPath)&quot; --post-build-check &quot;$(SolutionDir).&quot;" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="&quot;$(TargetDir)$(AssemblyName).exe&quot; --post-build-check &quot;$(SolutionDir).&quot;" />
   </Target>
 
 </Project>
