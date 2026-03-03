@@ -24,7 +24,7 @@ namespace RT.Propeller
         Service
     }
 
-    [CommandLine, DocumentationLiteral("Runs, installs or uninstalls the Propeller HTTP service.")]
+    [DocumentationLiteral("Runs, installs or uninstalls the Propeller HTTP service.")]
     public sealed class CommandLine : ICommandLineValidatable
     {
         [IsPositional, DocumentationLiteral("Specifies the action to perform.")]

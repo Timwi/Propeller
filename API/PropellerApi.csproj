@@ -1,21 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <ProjectGuid>6acaf8e4-0462-2a2d-5cb8-91ada70b2540</ProjectGuid>
-    <TargetFramework>net472</TargetFramework>
-    <OutputPath>..\builds\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
-    <DocumentationFile>..\builds\$(Configuration)\$(AssemblyName).xml</DocumentationFile>
-    <Configurations>Debug;Release</Configurations>
-    <Version>1.1.0</Version>
+    <TargetFramework>net8.0</TargetFramework>
+    <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
+    <Version>2.0.0</Version>
     <Authors>Timwi</Authors>
-    <Description>The client API required to write modules for the HTTP server Propeller.</Description>
+    <Description>The client API required to write modules for the webserver Propeller.</Description>
     <PackageTags>C#;Http;Server</PackageTags>
     <RepositoryUrl>https://github.com/Timwi/Propeller</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
-    <BaseIntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath></PropertyGroup>
-  <ItemGroup>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
+    <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj" />
+    <ProjectReference Include="..\..\RT.TagSoup\Src\RT.TagSoup.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Json\RT.Json.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.PostBuild\RT.PostBuild.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Binary\RT.Serialization.Binary.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Json\RT.Serialization.Json.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization.Xml\RT.Serialization.Xml.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Serialization\RT.Serialization.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
     <PackageReference Include="RT.Json" version="2.0.1768" />
     <PackageReference Include="RT.PostBuild" version="2.0.1768" />
     <PackageReference Include="RT.Serialization" version="2.0.1768" />
@@ -26,7 +35,5 @@
     <PackageReference Include="RT.TagSoup" version="1.0.1634" />
     <PackageReference Include="RT.Util.Core" version="2.0.1768" />
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
+
 </Project>

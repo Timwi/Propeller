@@ -1,22 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
 using RT.PropellerApi;
+using RT.Serialization;
 using RT.Servers;
 using RT.Util.ExtensionMethods;
-using RT.Serialization;
-
-[assembly: AssemblyTitle("Redirector")]
-[assembly: AssemblyDescription("Provides a Propeller module that simply redirects to another URL.")]
-[assembly: AssemblyCompany("CuteBits")]
-[assembly: AssemblyProduct("Propeller Redirector")]
-[assembly: AssemblyCopyright("Copyright © CuteBits 2013")]
-[assembly: ComVisible(false)]
-[assembly: Guid("1a75d829-1b88-42ff-b1f3-c8e925c04d7b")]
-[assembly: AssemblyVersion("1.0.9999.9999")]
-[assembly: AssemblyFileVersion("1.0.9999.9999")]
 
 namespace RT.Propeller.Modules
 {

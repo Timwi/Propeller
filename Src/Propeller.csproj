@@ -1,135 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RT.Propeller</RootNamespace>
-    <AssemblyName>Propeller</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <OutputPath>..\builds\$(Configuration)\</OutputPath>
-    <IntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>..\builds\$(Configuration)\obj-$(AssemblyName)\</BaseIntermediateOutputPath>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworks>net8.0-windows</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>2.0.0</Version>
+    <Authors>rstarkov;Timwi;caesay</Authors>
+    <Description>Provides powerful, flexible and secure web-based functionality on global internet systems by leveraging dynamic API synergy through an extensible architecture.</Description>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineConstants>TRACE</DefineConstants>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="PresentationCore" />
-    <Reference Include="PresentationFramework" />
-    <Reference Include="RT.CommandLine, Version=2.1.163.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.CommandLine.2.1.163\lib\netstandard2.0\RT.CommandLine.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Json, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Json.2.0.1768\lib\netstandard2.0\RT.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Lingo.Base, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Lingo.Base.2.0.1768\lib\netstandard2.0\RT.Lingo.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.PostBuild, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.PostBuild.2.0.1768\lib\netstandard2.0\RT.PostBuild.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.SelfService, Version=1.1.35.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.SelfService.1.1.35\lib\netstandard2.0\RT.SelfService.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.2.0.1768\lib\netstandard2.0\RT.Serialization.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Binary, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Binary.2.0.1768\lib\netstandard2.0\RT.Serialization.Binary.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Json, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Json.2.0.1768\lib\netstandard2.0\RT.Serialization.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Serialization.Xml, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Serialization.Xml.2.0.1768\lib\netstandard2.0\RT.Serialization.Xml.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Servers, Version=1.0.1691.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Servers.1.0.1691\lib\netstandard2.0\RT.Servers.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.TagSoup, Version=1.0.1634.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.TagSoup.1.0.1634\lib\netstandard2.0\RT.TagSoup.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Util, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Util.2.0.1768\lib\net472\RT.Util.dll</HintPath>
-    </Reference>
-    <Reference Include="RT.Util.Core, Version=2.0.1768.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\RT.Util.Core.2.0.1768\lib\netstandard2.0\RT.Util.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Diagnostics.EventLog, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Diagnostics.EventLog.8.0.0\lib\net462\System.Diagnostics.EventLog.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.Principal.Windows, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.Security.Principal.Windows.5.0.0\lib\net461\System.Security.Principal.Windows.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.ServiceProcess.ServiceController, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\System.ServiceProcess.ServiceController.8.0.0\lib\net462\System.ServiceProcess.ServiceController.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data.DataSetExtensions">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-    <Reference Include="WindowsBase" />
+    <ProjectReference Include="..\..\RT.CommandLine\Src\RT.CommandLine.csproj" />
+    <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj" />
+    <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.PostBuild\RT.PostBuild.csproj" />
+    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj" />
+    <ProjectReference Include="..\API\PropellerApi.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="CommandLine.cs" />
-    <Compile Include="AppDomainInfo.cs" />
-    <Compile Include="AppDomainRunner.cs" />
-    <Compile Include="PropellerEngine.cs" />
-    <Compile Include="ModuleInitializationException.cs" />
-    <Compile Include="PropellerProgram.cs" />
-    <Compile Include="PropellerService.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\API\PropellerApi.csproj">
-      <Project>{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}</Project>
-      <Name>PropellerApi</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>"$(TargetPath)" --post-build-check "$(SolutionDir)."</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="&quot;$(TargetPath)&quot; --post-build-check &quot;$(SolutionDir).&quot;" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>

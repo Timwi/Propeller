@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# IDE0130: Let me specify my own namespaces
+dotnet_diagnostic.IDE0130.severity = none
+
+# IDE0051: Remove unused private members (we have a PostBuildCheck method that is invoked via reflection)
+dotnet_diagnostic.IDE0051.severity = none

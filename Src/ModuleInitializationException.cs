@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.Serialization;
-
-namespace RT.Propeller
+﻿namespace RT.Propeller
 {
     [Serializable]
     class ModuleInitializationException : Exception
@@ -10,6 +7,5 @@ namespace RT.Propeller
         public ModuleInitializationException(Exception inner) : this(null, inner) { }
         public ModuleInitializationException(string message) : this(message, null) { }
         public ModuleInitializationException(string message, Exception inner) : base(message, inner) { }
-        protected ModuleInitializationException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }
