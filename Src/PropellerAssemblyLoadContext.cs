@@ -22,15 +22,24 @@ namespace RT.Propeller
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
+            // Assemblies that must be shared with Propeller
+            if (assemblyName.Name == "PropellerApi")
+                return typeof(IPropellerModule).Assembly;
+            if (assemblyName.Name == "RT.Servers")
+                return typeof(HttpRequest).Assembly;
+            if (assemblyName.Name == "RT.Util.Core")
+                return typeof(IEnumerableExtensions).Assembly;
+
+            // Try to load the assembly from the same folder as the module DLL
             var folder = Path.GetDirectoryName(ModuleSettings.ModuleDll);
             foreach (var ext in new[] { ".dll", ".exe" })
             {
-                var dllPath = Path.Combine(folder, $"{assemblyName.Name}.{ext}");
+                var dllPath = Path.Combine(folder, assemblyName.Name + ext);
                 if (File.Exists(dllPath))
                     return LoadFromStream(new MemoryStream(File.ReadAllBytes(dllPath)));
             }
 
-            // Returning null means use the DLLs from Propeller (this includes PropellerApi and RT.Servers)
+            // Defer to default resolution
             return null;
         }
 
@@ -46,7 +55,7 @@ namespace RT.Propeller
             Type moduleType;
             if (ModuleSettings.ModuleType != null)
             {
-                moduleType = Type.GetType(ModuleSettings.ModuleType);
+                moduleType = assembly.GetType(ModuleSettings.ModuleType);
                 if (moduleType == null)
                     throw new ModuleInitializationException("The specified CLR type {0} is invalid.".Fmt(ModuleSettings.ModuleType));
             }

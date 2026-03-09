@@ -1,5 +1,4 @@
 ﻿using System.ServiceProcess;
-using System.Threading;
 using RT.Services;
 
 namespace RT.Propeller

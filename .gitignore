@@ -6,3 +6,4 @@ obj
 *.sln.cache
 *.orig
 packages/
+Src/Properties/launchSettings.json
