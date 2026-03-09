@@ -10,6 +10,17 @@
     <RepositoryUrl>https://github.com/Timwi/Propeller</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>
+    <LangVersion>latest</LangVersion>
+
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Timwi/Propeller</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Timwi/Propeller.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+    <EmbedAllSources>true</EmbedAllSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
