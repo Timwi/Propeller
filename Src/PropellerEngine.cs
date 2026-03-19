@@ -18,8 +18,8 @@ namespace RT.Propeller
         private DateTime _settingsLastChangedTime = DateTime.MinValue;
         private HttpServer _server;
         private LoggerBase _log;
-        private HashSet<AppDomainInfo> _activeAppDomains = new HashSet<AppDomainInfo>();
-        private HashSet<AppDomainInfo> _inactiveAppDomains = new HashSet<AppDomainInfo>();
+        private HashSet<AssemblyLoadContextInfo> _activeAppDomains = new HashSet<AssemblyLoadContextInfo>();
+        private HashSet<AssemblyLoadContextInfo> _inactiveAppDomains = new HashSet<AssemblyLoadContextInfo>();
 
         private bool reinitialize()
         {
@@ -67,13 +67,13 @@ namespace RT.Propeller
             CurrentSettings = newSettings;
 
             // Create a new instance of all the modules
-            var newAppDomains = new HashSet<AppDomainInfo>();
+            var newAppDomains = new HashSet<AssemblyLoadContextInfo>();
             foreach (var module in newSettings.Modules)
             {
                 _log.Info("Initializing module: " + module.ModuleName);
                 try
                 {
-                    var inf = new AppDomainInfo(_log, newSettings, module, new SettingsSaver(s =>
+                    var inf = new AssemblyLoadContextInfo(_log, newSettings, module, new SettingsSaver(s =>
                     {
                         module.Settings = s;
                         _settingsSavedByModule = true;
@@ -173,7 +173,7 @@ namespace RT.Propeller
                 }
 
                 // ③ If any module wants to reinitialize, do it
-                AppDomainInfo[] actives;
+                AssemblyLoadContextInfo[] actives;
                 lock (_lockObject)
                     actives = _activeAppDomains.ToArray();
                 foreach (var active in actives)
@@ -181,7 +181,7 @@ namespace RT.Propeller
                     if (!active.MustReinitialize)   // this adds a log message if it returns true
                         continue;
                     _log.Info("Module says it must reinitialize: {0} ({1})".Fmt(active.ModuleSettings.ModuleName, active.GetHashCode()));
-                    var newAppDomain = new AppDomainInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
+                    var newAppDomain = new AssemblyLoadContextInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
                     lock (_lockObject)
                     {
                         _inactiveAppDomains.Add(active);
@@ -194,7 +194,7 @@ namespace RT.Propeller
                 }
 
                 // ④ Try to clean up as many inactive AppDomains as possible
-                AppDomainInfo[] inactives;
+                AssemblyLoadContextInfo[] inactives;
                 lock (_lockObject)
                     inactives = _inactiveAppDomains.ToArray();
                 foreach (var inactive in inactives)
