@@ -6,9 +6,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Propeller", "Src\Propeller.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropellerApi", "API\PropellerApi.csproj", "{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileServer", "Src\Modules\FileServer\FileServer.csproj", "{9BE86A9C-7A29-495A-977B-E8DD881A34B1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileServer", "FileServer\FileServer.csproj", "{9BE86A9C-7A29-495A-977B-E8DD881A34B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Redirector", "Src\Modules\Redirector\Redirector.csproj", "{19010B43-7871-4BFA-83F5-AB4504D164D2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Redirector", "Redirector\Redirector.csproj", "{19010B43-7871-4BFA-83F5-AB4504D164D2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RT.Servers", "..\RT.Servers\Src\RT.Servers.csproj", "{F8F682B6-8315-3203-B8D0-22C305F9842B}"
 EndProject
@@ -43,8 +43,8 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Debug|Any CPU.ActiveCfg = Debug-locallibs|Any CPU
+		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Debug|Any CPU.Build.0 = Debug-locallibs|Any CPU
 		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B02D01E-2CB9-49F3-86B9-97BF8CD161FA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5770EE79-8340-41FB-9B8E-EB4A3C487FF1}.Debug|Any CPU.ActiveCfg = Debug-locallibs|Any CPU

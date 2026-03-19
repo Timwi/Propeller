@@ -1,8 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.Remoting;
-using System.Security.Permissions;
+﻿using System.Reflection;
+using System.Runtime.Loader;
 using RT.Json;
 using RT.PropellerApi;
 using RT.Servers;
@@ -11,27 +8,27 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Propeller
 {
-    /// <summary>Contains the code that runs in an AppDomain separate from the main Propeller code. There is an AppDomainRunner for each module.</summary>
+    /// <summary>Contains the code that runs in an AssemblyLoadContext separate from the main Propeller code. There is an AssemblyLoadContextRunner for each module.</summary>
     [Serializable]
-    class AppDomainRunner : MarshalByRefObject
+    class AssemblyLoadContextRunner : AssemblyLoadContext
     {
-        private string _moduleName;
-        private LoggerBase _log;
         private IPropellerModule _module;
 
-        /// <summary>See base.</summary>
-        [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.Infrastructure)]
-        public override object InitializeLifetimeService()
+        protected override Assembly Load(AssemblyName assemblyName)
         {
+            switch (assemblyName.Name)
+            {
+                case "RT.Servers": return typeof(HttpServer).Assembly;
+                case "RT.Util.Core": return typeof(Ut).Assembly;
+                case "PropellerApi": return typeof(IPropellerModule).Assembly;
+            }
+            Console.WriteLine($"<> {assemblyName} ({assemblyName.Name})");
             return null;
         }
 
-        public void Init(string modulePath, string moduleClrType, string moduleName, JsonValue moduleSettings, LoggerBase log, ISettingsSaver saver)
+        public void Init(string modulePath, string moduleClrType, JsonValue moduleSettings, LoggerBase log, ISettingsSaver saver)
         {
-            _log = log;
-            _moduleName = moduleName;
-
-            var assembly = Assembly.LoadFile(modulePath);
+            var assembly = LoadFromAssemblyPath(modulePath);
             Type moduleType;
             if (moduleClrType != null)
             {
@@ -59,11 +56,10 @@ namespace RT.Propeller
         }
 
         public string[] FileFiltersToBeMonitoredForChanges { get { return _module.FileFiltersToBeMonitoredForChanges; } }
-        public bool MustReinitialize { get { return _module.MustReinitialize; } }
+        public bool MustReinitialize => _module.MustReinitialize;
 
         public void Shutdown()
         {
-            RemotingServices.Disconnect(this);
             _module.Shutdown();
         }
     }

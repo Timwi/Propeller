@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
+﻿using System.Runtime.Loader;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
@@ -10,11 +6,11 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Propeller
 {
-    sealed class AppDomainInfo : IDisposable
+    internal sealed class AssemblyLoadContextInfo : IDisposable
     {
-        public AppDomain AppDomain { get; private set; }
+        public AssemblyLoadContext AppDomain { get; private set; }
         public UrlMapping[] UrlMappings { get; private set; }
-        public AppDomainRunner RunnerProxy { get; private set; }
+        public AssemblyLoadContextRunner RunnerProxy { get; private set; }
         public PropellerModuleSettings ModuleSettings { get; private set; }
         public ISettingsSaver Saver { get; private set; }
         public string TempPathUsed { get; private set; }
@@ -22,12 +18,12 @@ namespace RT.Propeller
         private int _activeConnections = 0;
         private int _filesChangedCount = 0;
         private string _fileChanged = null;
-        private LoggerBase _log;
-        private List<FileSystemWatcher> _watchers = new List<FileSystemWatcher>();
+        private readonly LoggerBase _log;
+        private readonly List<FileSystemWatcher> _watchers = [];
 
-        private static int _appDomainCount = 0;     // only used to give each AppDomain a unique name
+        private static readonly int _appDomainCount = 0;     // only used to give each AppDomain a unique name
 
-        public AppDomainInfo(LoggerBase log, PropellerSettings settings, PropellerModuleSettings moduleSettings, ISettingsSaver saver)
+        public AssemblyLoadContextInfo(LoggerBase log, PropellerSettings settings, PropellerModuleSettings moduleSettings, ISettingsSaver saver)
         {
             ModuleSettings = moduleSettings;
             Saver = saver;
@@ -39,39 +35,43 @@ namespace RT.Propeller
             Directory.CreateDirectory(tempFolder);
 
             // Find a new folder to put the DLL/EXE files into
-            int j = 1;
+            var j = 1;
             do { TempPathUsed = Path.Combine(tempFolder, "propeller-tmp-" + (j++)); }
             while (Directory.Exists(TempPathUsed));
             Directory.CreateDirectory(TempPathUsed);
 
-            // Copy all the DLLs/EXEs to the temporary folder
-            foreach (var sourceFile in
-                new[] { typeof(PropellerEngine), typeof(IPropellerModule), typeof(HttpServer), typeof(Ut) }.Select(type => type.Assembly.Location).Concat(
-                new[] { "*.exe", "*.dll", "*.pdb" }.SelectMany(ext => Directory.EnumerateFiles(Path.GetDirectoryName(moduleSettings.ModuleDll), ext))))
+            // Copy all the files to the temporary folder
+            var basePath = Path.GetDirectoryName(moduleSettings.ModuleDll);
+            /*
+            foreach (var file in Directory.EnumerateFiles(basePath, "*", SearchOption.AllDirectories))
             {
-                var destFile = Path.Combine(TempPathUsed, Path.GetFileName(sourceFile));
+                Console.WriteLine(PathUtil.ToggleRelative(basePath, file));
+            }
+            */
+            var fileCount = 0;
+            foreach (var sourceFile in Directory.EnumerateFiles(basePath, "*", SearchOption.AllDirectories))
+            {
+                var destFile = Path.Combine(TempPathUsed, PathUtil.ToggleRelative(basePath, sourceFile));
                 if (File.Exists(destFile))
-                    _log.Warn(2, "Skipping file {0} because destination file {1} already exists.".Fmt(sourceFile, destFile));
+                    _log.Warn(2, $"Skipping file {sourceFile} because destination file {destFile} already exists.");
                 else
                 {
-                    _log.Info(2, "Copying file {0} to {1}".Fmt(sourceFile, destFile));
                     File.Copy(sourceFile, destFile);
+                    fileCount++;
                 }
             }
+            _log.Info(2, $"{fileCount} file(s) copied from {basePath} to {TempPathUsed}.");
 
-            // Create an AppDomain
-            var setup = new AppDomainSetup { ApplicationBase = TempPathUsed, PrivateBinPath = TempPathUsed };
-            AppDomain = AppDomain.CreateDomain("Propeller AppDomain #{0}, module {1}".Fmt(_appDomainCount++, moduleSettings.ModuleName), null, setup);
-            RunnerProxy = (AppDomainRunner) AppDomain.CreateInstanceAndUnwrap("Propeller", "RT.Propeller.AppDomainRunner");
-            RunnerProxy.Init(
+            // Create an AssemblyLoadContext
+            var loadContext = new AssemblyLoadContextRunner();
+            loadContext.Init(
                 Path.Combine(TempPathUsed, Path.GetFileName(moduleSettings.ModuleDll)),
                 moduleSettings.ModuleType,
-                moduleSettings.ModuleName,
                 moduleSettings.Settings,
                 _log,
                 saver);
 
-            IEnumerable<string> filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
+            var filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
             if (RunnerProxy.FileFiltersToBeMonitoredForChanges != null)
                 filters = filters.Concat(RunnerProxy.FileFiltersToBeMonitoredForChanges);
             foreach (var filter in filters.Concat(moduleSettings.ModuleDll))
@@ -94,10 +94,7 @@ namespace RT.Propeller
             finally
             {
                 // THEN add the callback, which would otherwise not be serializable
-                req.CleanUpCallback += () =>
-                {
-                    Interlocked.Decrement(ref _activeConnections);
-                };
+                req.CleanUpCallback += () => Interlocked.Decrement(ref _activeConnections);
             }
         }
 
@@ -151,7 +148,7 @@ namespace RT.Propeller
                 try { watcher.Dispose(); }
                 catch { }
             _watchers.Clear();
-            AppDomain.Unload(AppDomain);
+            AppDomain.Unload();
             try { Directory.Delete(TempPathUsed, recursive: true); }
             catch { }
         }

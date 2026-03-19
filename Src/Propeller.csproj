@@ -2,14 +2,26 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0-windows</TargetFrameworks>
+    <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
+    <TargetFrameworks>net10.0-windows</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Version>2.0.0</Version>
     <Authors>rstarkov;Timwi;caesay</Authors>
     <Description>Provides powerful, flexible and secure web-based functionality on global internet systems by leveraging dynamic API synergy through an extensible architecture.</Description>
+    <LangVersion>latest</LangVersion>
+
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/Timwi/Propeller</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Timwi/Propeller.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IncludeSymbols>true</IncludeSymbols>
+    <EmbedAllSources>true</EmbedAllSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
     <ProjectReference Include="..\..\RT.CommandLine\Src\RT.CommandLine.csproj" />
     <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj" />
     <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj" />
@@ -18,8 +30,17 @@
     <ProjectReference Include="..\API\PropellerApi.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
+    <PackageReference Include="RT.CommandLine" Version="2.2.204" />
+    <PackageReference Include="RT.SelfService" Version="1.1.35" />
+    <PackageReference Include="RT.Servers" Version="1.1.520" />
+    <PackageReference Include="RT.PostBuild" Version="2.0.1821" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1821" />
+    <PackageReference Include="PropellerApi" Version="2.1.0" />
+  </ItemGroup>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="&quot;$(TargetPath)&quot; --post-build-check &quot;$(SolutionDir).&quot;" />
+    <Exec WorkingDirectory="$(OutputPath)" Command="&quot;$(TargetDir)$(AssemblyName).exe&quot; --post-build-check &quot;$(SolutionDir).&quot;" />
   </Target>
 
 </Project>
