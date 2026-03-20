@@ -33,7 +33,7 @@ namespace RT.Propeller
             switch (cmdLine.Action)
             {
                 case Action.RunAsStandalone:
-                    var thread = new Thread(() => { service.RunAsStandalone(args); });
+                    var thread = new Thread(() => service.RunAsStandalone(args));
                     thread.Start();
                     Console.WriteLine("Running. Press ENTER to exit.");
                     Console.ReadLine();
