@@ -18,8 +18,8 @@ namespace RT.Propeller
         private DateTime _settingsLastChangedTime = DateTime.MinValue;
         private HttpServer _server;
         private LoggerBase _log;
-        private HashSet<AssemblyLoadContextInfo> _activeAppDomains = new HashSet<AssemblyLoadContextInfo>();
-        private HashSet<AssemblyLoadContextInfo> _inactiveAppDomains = new HashSet<AssemblyLoadContextInfo>();
+        private HashSet<PropellerAssemblyLoadContext> _activeAppDomains = new HashSet<PropellerAssemblyLoadContext>();
+        private HashSet<PropellerAssemblyLoadContext> _inactiveAppDomains = new HashSet<PropellerAssemblyLoadContext>();
 
         private bool reinitialize()
         {
@@ -67,13 +67,13 @@ namespace RT.Propeller
             CurrentSettings = newSettings;
 
             // Create a new instance of all the modules
-            var newAppDomains = new HashSet<AssemblyLoadContextInfo>();
+            var newAppDomains = new HashSet<PropellerAssemblyLoadContext>();
             foreach (var module in newSettings.Modules)
             {
                 _log.Info("Initializing module: " + module.ModuleName);
                 try
                 {
-                    var inf = new AssemblyLoadContextInfo(_log, newSettings, module, new SettingsSaver(s =>
+                    var inf = new PropellerAssemblyLoadContext(_log, newSettings, module, new SettingsSaver(s =>
                     {
                         module.Settings = s;
                         _settingsSavedByModule = true;
@@ -173,7 +173,7 @@ namespace RT.Propeller
                 }
 
                 // ③ If any module wants to reinitialize, do it
-                AssemblyLoadContextInfo[] actives;
+                PropellerAssemblyLoadContext[] actives;
                 lock (_lockObject)
                     actives = _activeAppDomains.ToArray();
                 foreach (var active in actives)
@@ -181,7 +181,7 @@ namespace RT.Propeller
                     if (!active.MustReinitialize)   // this adds a log message if it returns true
                         continue;
                     _log.Info("Module says it must reinitialize: {0} ({1})".Fmt(active.ModuleSettings.ModuleName, active.GetHashCode()));
-                    var newAppDomain = new AssemblyLoadContextInfo(_log, CurrentSettings, active.ModuleSettings, active.Saver);
+                    var newAppDomain = new PropellerAssemblyLoadContext(_log, CurrentSettings, active.ModuleSettings, active.Saver);
                     lock (_lockObject)
                     {
                         _inactiveAppDomains.Add(active);
@@ -189,12 +189,12 @@ namespace RT.Propeller
                         _activeAppDomains.Add(newAppDomain);
                         _server.Handler = createResolver().Handle;
                         _log.Info(" --- {0} replaced with {1}, {0} shutting down".Fmt(active.GetHashCode(), newAppDomain.GetHashCode()));
-                        active.RunnerProxy.Shutdown();
+                        active.Module.Shutdown();
                     }
                 }
 
-                // ④ Try to clean up as many inactive AppDomains as possible
-                AssemblyLoadContextInfo[] inactives;
+                // ④ Try to clean up as many inactive AssemblyLoadContexts as possible
+                PropellerAssemblyLoadContext[] inactives;
                 lock (_lockObject)
                     inactives = _inactiveAppDomains.ToArray();
                 foreach (var inactive in inactives)
@@ -260,7 +260,7 @@ namespace RT.Propeller
             }
             foreach (var domain in _activeAppDomains.Concat(_inactiveAppDomains))
             {
-                domain.RunnerProxy.Shutdown();
+                domain.Module.Shutdown();
                 domain.Dispose();
             }
             return true;

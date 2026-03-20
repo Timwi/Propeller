@@ -1,4 +1,5 @@
-﻿using System.Runtime.Loader;
+﻿using System.Reflection;
+using System.Runtime.Loader;
 using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
@@ -6,23 +7,33 @@ using RT.Util.ExtensionMethods;
 
 namespace RT.Propeller
 {
-    internal sealed class AssemblyLoadContextInfo : IDisposable
+    internal sealed class PropellerAssemblyLoadContext : AssemblyLoadContext, IDisposable
     {
         public UrlMapping[] UrlMappings { get; private set; }
-        public AssemblyLoadContextRunner RunnerProxy { get; private set; }
         public PropellerModuleSettings ModuleSettings { get; private set; }
         public ISettingsSaver Saver { get; private set; }
+        public IPropellerModule Module { get; private set; }
         public string TempPathUsed { get; private set; }
 
+        private readonly AssemblyDependencyResolver _resolver;
+        private readonly List<FileSystemWatcher> _watchers = [];
+        private readonly LoggerBase _log;
         private int _activeConnections = 0;
         private int _filesChangedCount = 0;
         private string _fileChanged = null;
-        private readonly LoggerBase _log;
-        private readonly List<FileSystemWatcher> _watchers = [];
 
-        private static readonly int _appDomainCount = 0;     // only used to give each AppDomain a unique name
+        protected override Assembly Load(AssemblyName assemblyName) => assemblyName.Name switch
+        {
+            "RT.Servers" => typeof(HttpServer).Assembly,
+            "RT.Util.Core" => typeof(Ut).Assembly,
+            "PropellerApi" => typeof(IPropellerModule).Assembly,
+            _ => _resolver.ResolveAssemblyToPath(assemblyName).NullOr(LoadFromAssemblyPath),
+        };
 
-        public AssemblyLoadContextInfo(LoggerBase log, PropellerSettings settings, PropellerModuleSettings moduleSettings, ISettingsSaver saver)
+        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName) =>
+            _resolver.ResolveUnmanagedDllToPath(unmanagedDllName).NullOr(LoadUnmanagedDllFromPath) ?? IntPtr.Zero;
+
+        public PropellerAssemblyLoadContext(LoggerBase log, PropellerSettings settings, PropellerModuleSettings moduleSettings, ISettingsSaver saver) : base(isCollectible: true)
         {
             ModuleSettings = moduleSettings;
             Saver = saver;
@@ -56,40 +67,45 @@ namespace RT.Propeller
             }
             _log.Info(2, $"{fileCount} file(s) copied from {basePath} to {TempPathUsed}.");
 
-            // Create an AssemblyLoadContext
-            RunnerProxy = new AssemblyLoadContextRunner();
-            RunnerProxy.Init(
-                Path.Combine(TempPathUsed, Path.GetFileName(moduleSettings.ModuleDll)),
-                moduleSettings.ModuleType,
-                moduleSettings.Settings,
-                _log,
-                saver);
+            _resolver = new AssemblyDependencyResolver(moduleSettings.ModuleDll);
+
+            var assembly = LoadFromAssemblyPath(moduleSettings.ModuleDll);
+            Type moduleType;
+            if (moduleSettings.ModuleType != null)
+            {
+                moduleType = Type.GetType(moduleSettings.ModuleType);
+                if (moduleType == null)
+                    throw new ModuleInitializationException("The specified CLR type {0} is invalid.".Fmt(moduleSettings.ModuleType));
+            }
+            else
+            {
+                var candidates = assembly.GetExportedTypes().Where(type => typeof(IPropellerModule).IsAssignableFrom(type) && !type.IsAbstract).Take(2).ToArray();
+                if (candidates.Length == 0)
+                    throw new ModuleInitializationException("The file {0} does not contain a Propeller module.".Fmt(moduleSettings.ModuleDll));
+                else if (candidates.Length == 2)
+                    throw new ModuleInitializationException("The file {0} contains multiple Propeller modules ({1} and {2}). Specify the desired module type explicitly.".Fmt(moduleSettings.ModuleDll, candidates[0].FullName, candidates[1].FullName));
+                moduleType = candidates[0];
+            }
+
+            Module = (IPropellerModule) Activator.CreateInstance(moduleType);
+            Module.Init(log, moduleSettings.Settings, saver);
 
             var filters = moduleSettings.MonitorFilters ?? Enumerable.Empty<string>();
-            if (RunnerProxy.FileFiltersToBeMonitoredForChanges != null)
-                filters = filters.Concat(RunnerProxy.FileFiltersToBeMonitoredForChanges);
+            if (Module.FileFiltersToBeMonitoredForChanges != null)
+                filters = filters.Concat(Module.FileFiltersToBeMonitoredForChanges);
             foreach (var filter in filters.Concat(moduleSettings.ModuleDll))
                 addFileSystemWatcher(Path.GetDirectoryName(filter), Path.GetFileName(filter));
 
             UrlMappings = moduleSettings.Hooks.Select(hook => new UrlMapping(hook, Handle, true)).ToArray();
 
-            _log.Info("Module {0} URLs: {1}".Fmt(moduleSettings.ModuleName, moduleSettings.Hooks.JoinString("; ")));
+            _log.Info($"Module {moduleSettings.ModuleName} URLs: {moduleSettings.Hooks.JoinString("; ")}");
         }
 
         public HttpResponse Handle(HttpRequest req)
         {
             Interlocked.Increment(ref _activeConnections);
-
-            try
-            {
-                // Must call the handle method first because this is a call across the AppDomain boundary
-                return RunnerProxy.Handle(req);
-            }
-            finally
-            {
-                // THEN add the callback, which would otherwise not be serializable
-                req.CleanUpCallback += () => Interlocked.Decrement(ref _activeConnections);
-            }
+            req.CleanUpCallback += () => Interlocked.Decrement(ref _activeConnections);
+            return Module.Handle(req);
         }
 
         private void addFileSystemWatcher(string path, string filter)
@@ -119,14 +135,14 @@ namespace RT.Propeller
             {
                 if (_filesChangedCount > 0)
                 {
-                    _log.Info(@"Module {2}: Detected {0} changes to the filesystem, including ""{1}"".".Fmt(_filesChangedCount, _fileChanged, ModuleSettings.ModuleName));
+                    _log.Info($@"Module {ModuleSettings.ModuleName}: Detected {_filesChangedCount} changes to the filesystem, including ""{_fileChanged}"".");
                     _filesChangedCount = 0;
                     return true;
                 }
 
-                if (RunnerProxy.MustReinitialize)
+                if (Module.MustReinitialize)
                 {
-                    _log.Info(@"Module {0} asks to be reinitialized.".Fmt(ModuleSettings.ModuleName));
+                    _log.Info($"Module {ModuleSettings.ModuleName} asks to be reinitialized.");
                     return true;
                 }
 
@@ -142,7 +158,7 @@ namespace RT.Propeller
                 try { watcher.Dispose(); }
                 catch { }
             _watchers.Clear();
-            RunnerProxy.Unload();
+            Unload();
             try { Directory.Delete(TempPathUsed, recursive: true); }
             catch { }
         }
