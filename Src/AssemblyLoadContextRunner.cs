@@ -13,21 +13,23 @@ namespace RT.Propeller
     class AssemblyLoadContextRunner : AssemblyLoadContext
     {
         private IPropellerModule _module;
+        private AssemblyDependencyResolver _resolver;
 
-        protected override Assembly Load(AssemblyName assemblyName)
+        protected override Assembly Load(AssemblyName assemblyName) => assemblyName.Name switch
         {
-            switch (assemblyName.Name)
-            {
-                case "RT.Servers": return typeof(HttpServer).Assembly;
-                case "RT.Util.Core": return typeof(Ut).Assembly;
-                case "PropellerApi": return typeof(IPropellerModule).Assembly;
-            }
-            Console.WriteLine($"<> {assemblyName} ({assemblyName.Name})");
-            return null;
-        }
+            "RT.Servers" => typeof(HttpServer).Assembly,
+            "RT.Util.Core" => typeof(Ut).Assembly,
+            "PropellerApi" => typeof(IPropellerModule).Assembly,
+            _ => _resolver.ResolveAssemblyToPath(assemblyName).NullOr(LoadFromAssemblyPath),
+        };
+
+        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName) =>
+            _resolver.ResolveUnmanagedDllToPath(unmanagedDllName).NullOr(LoadUnmanagedDllFromPath) ?? IntPtr.Zero;
 
         public void Init(string modulePath, string moduleClrType, JsonValue moduleSettings, LoggerBase log, ISettingsSaver saver)
         {
+            _resolver = new AssemblyDependencyResolver(modulePath);
+
             var assembly = LoadFromAssemblyPath(modulePath);
             Type moduleType;
             if (moduleClrType != null)
