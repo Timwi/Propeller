@@ -1,8 +1,9 @@
 .vs
 bin
 obj
+publish
 *.suo
-*.csproj.user
+*.user
 *.sln.cache
 *.orig
 Src/Properties/launchSettings.json

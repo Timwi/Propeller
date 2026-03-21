@@ -32,11 +32,11 @@
 
   <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
     <PackageReference Include="RT.CommandLine" Version="2.2.204" />
-    <PackageReference Include="RT.SelfService" Version="1.1.35" />
+    <PackageReference Include="RT.SelfService" Version="1.1.37" />
     <PackageReference Include="RT.Servers" Version="1.1.520" />
-    <PackageReference Include="RT.PostBuild" Version="2.0.1821" />
-    <PackageReference Include="RT.Util.Core" Version="2.0.1821" />
-    <PackageReference Include="PropellerApi" Version="2.1.0" />
+    <PackageReference Include="RT.PostBuild" Version="2.0.1822" />
+    <PackageReference Include="RT.Util.Core" Version="2.0.1822" />
+    <PackageReference Include="PropellerApi" Version="2.3.0" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

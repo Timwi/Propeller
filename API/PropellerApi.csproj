@@ -3,13 +3,15 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
-    <Version>2.0.0</Version>
+    <Version>2.3.0</Version>
     <Authors>Timwi</Authors>
     <Description>The client API required to write modules for the webserver Propeller.</Description>
     <PackageTags>C#;Http;Server</PackageTags>
     <RepositoryUrl>https://github.com/Timwi/Propeller</RepositoryUrl>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbols>True</IncludeSymbols>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
@@ -34,6 +36,11 @@
     <PackageReference Include="RT.Servers" version="1.0.1691" />
     <PackageReference Include="RT.TagSoup" version="1.0.1634" />
     <PackageReference Include="RT.Util.Core" version="2.0.1768" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
