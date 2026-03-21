@@ -24,19 +24,15 @@
   <ItemGroup Condition="'$(Configuration)' == 'Debug-locallibs'">
     <ProjectReference Include="..\..\RT.CommandLine\Src\RT.CommandLine.csproj" />
     <ProjectReference Include="..\..\RT.SelfService\Src\RT.SelfService.csproj" />
-    <ProjectReference Include="..\..\RT.Servers\Src\RT.Servers.csproj" />
     <ProjectReference Include="..\..\RT.Util\RT.PostBuild\RT.PostBuild.csproj" />
-    <ProjectReference Include="..\..\RT.Util\RT.Util.Core\RT.Util.Core.csproj" />
     <ProjectReference Include="..\API\PropellerApi.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
     <PackageReference Include="RT.CommandLine" Version="2.2.204" />
     <PackageReference Include="RT.SelfService" Version="1.1.37" />
-    <PackageReference Include="RT.Servers" Version="1.1.520" />
-    <PackageReference Include="RT.PostBuild" Version="2.0.1822" />
-    <PackageReference Include="RT.Util.Core" Version="2.0.1822" />
-    <PackageReference Include="PropellerApi" Version="2.3.0" />
+    <PackageReference Include="RT.PostBuild" Version="2.0.1823" />
+    <PackageReference Include="PropellerApi" Version="2.4.0" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
