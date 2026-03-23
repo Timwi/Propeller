@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Configurations>Debug-Nuget;Debug-locallibs;Release</Configurations>
-    <Version>2.4.0</Version>
+    <Version>2.4.1</Version>
     <Authors>Timwi</Authors>
     <Description>The client API required to write modules for the webserver Propeller.</Description>
     <PackageTags>C#;Http;Server</PackageTags>
@@ -33,7 +33,7 @@
     <PackageReference Include="RT.Serialization.Binary" version="2.0.1823" />
     <PackageReference Include="RT.Serialization.Json" version="2.0.1823" />
     <PackageReference Include="RT.Serialization.Xml" version="2.0.1823" />
-    <PackageReference Include="RT.Servers" version="1.1.520" />
+    <PackageReference Include="RT.Servers" version="1.1.521" />
     <PackageReference Include="RT.TagSoup" version="1.1.52" />
     <PackageReference Include="RT.Util.Core" version="2.0.1823" />
   </ItemGroup>

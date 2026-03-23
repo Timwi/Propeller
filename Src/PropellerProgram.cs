@@ -46,7 +46,7 @@ namespace RT.Propeller
                     var arguments = "service";
                     if (cmdLine.SettingsPath != null)
                         arguments += @" -s ""{0}""".Fmt(cmdLine.SettingsPath);
-                    serviceProcess.Install(Services.ServiceAccount.NetworkService, arguments);
+                    serviceProcess.Install(ServiceAccount.NetworkService, arguments);
                     break;
 
                 case Action.Uninstall:
