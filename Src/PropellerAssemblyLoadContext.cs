@@ -1,7 +1,9 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
+using RT.Json;
 using RT.PropellerApi;
 using RT.Servers;
+using RT.TagSoup;
 using RT.Util;
 using RT.Util.ExtensionMethods;
 
@@ -24,9 +26,11 @@ namespace RT.Propeller
 
         protected override Assembly Load(AssemblyName assemblyName) => assemblyName.Name switch
         {
+            "PropellerApi" => typeof(IPropellerModule).Assembly,
             "RT.Servers" => typeof(HttpServer).Assembly,
             "RT.Util.Core" => typeof(Ut).Assembly,
-            "PropellerApi" => typeof(IPropellerModule).Assembly,
+            "RT.Json" => typeof(JsonValue).Assembly,
+            "RT.TagSoup" => typeof(Tag).Assembly,
             _ => _resolver.ResolveAssemblyToPath(assemblyName).NullOr(LoadFromAssemblyPath),
         };
 
