@@ -31,8 +31,8 @@
   <ItemGroup Condition="'$(Configuration)' != 'Debug-locallibs'">
     <PackageReference Include="RT.CommandLine" Version="2.2.204" />
     <PackageReference Include="RT.SelfService" Version="1.1.37" />
-    <PackageReference Include="RT.PostBuild" Version="2.0.1823" />
-    <PackageReference Include="PropellerApi" Version="2.4.0" />
+    <PackageReference Include="RT.PostBuild" Version="2.0.1824" />
+    <PackageReference Include="PropellerApi" Version="2.4.2" />
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

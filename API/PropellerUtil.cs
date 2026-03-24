@@ -41,7 +41,9 @@ namespace RT.PropellerApi
                 throw new InvalidOperationException("Propeller Standalone mode can only accept a settings file that has exactly one module configuration.");
 
             var log = GetLogger(true, settings.LogFile, settings.LogVerbosity);
-            log.Info("Running Propeller module {0} in standalone mode.".Fmt(module.Name));
+            log.Info($"Running Propeller module {module.Name} in standalone mode.");
+
+            WarnInvalidCertificates(settings, log);
 
             var resolver = new UrlResolver();
             var server = new HttpServer(settings.ServerOptions) { Handler = resolver.Handle, PropagateExceptions = propagateExceptions };
@@ -70,6 +72,16 @@ namespace RT.PropellerApi
             log.Info("Starting server on {0}.".Fmt(settings.ServerOptions.Endpoints.Select(ep => "port " + ep.Value.Port + (ep.Value.Secure ? " (HTTPS)" : " (HTTP)")).JoinString(", ")));
             settings.Save(settingsPath);
             server.StartListening(true);
+        }
+
+        public static void WarnInvalidCertificates(PropellerSettings settings, LoggerBase log)
+        {
+            if (settings.ServerOptions.Certificate is { Path: { } certPath } && !File.Exists(certPath))
+                log.Warn(@$"Certificate file ""{certPath}"" does not exist.");
+            if (settings.ServerOptions.Certificates is { } certDict)
+                foreach (var kvp in certDict)
+                    if (kvp is { Key: { } host, Value.Path: { } hostCertPath } && !File.Exists(hostCertPath))
+                        log.Warn(@$"Certificate file ""{hostCertPath}"" for host ""{host}"" does not exist.");
         }
 
         /// <summary>

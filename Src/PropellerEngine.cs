@@ -34,6 +34,8 @@ namespace RT.Propeller
             _log = PropellerUtil.GetLogger(true, newSettings.LogFile, newSettings.LogVerbosity);
             _log.Info(firstRunEver ? "Initializing Propeller" : "Reinitializing Propeller");
 
+            PropellerUtil.WarnInvalidCertificates(newSettings, _log);
+
             // If either port number or the bind-to address have changed, stop and restart the server’s listener.
             var startListening = false;
 
