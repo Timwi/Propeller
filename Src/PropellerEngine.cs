@@ -128,7 +128,7 @@ namespace RT.Propeller
         private HttpResponse errorHandler(HttpRequest req, Exception exception)
         {
             if (exception is HttpException httpExc)
-                _log.Info("Request {0} failure code {1}.".Fmt(req.Url.ToFull(), (int) httpExc.StatusCode));
+                _log.Info(5, $"Request {req.Url.ToFull()} failure code {(int) httpExc.StatusCode}.");
             else
             {
                 lock (_log)
