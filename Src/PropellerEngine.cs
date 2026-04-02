@@ -1,4 +1,5 @@
-﻿using RT.PropellerApi;
+﻿using System.Diagnostics;
+using RT.PropellerApi;
 using RT.Servers;
 using RT.Util;
 using RT.Util.ExtensionMethods;
@@ -31,8 +32,8 @@ namespace RT.Propeller
             // ... so remember the file date/time stamp *after* the writing
             _settingsLastChangedTime = File.GetLastWriteTimeUtc(_settingsPath);
 
-            _log = PropellerUtil.GetLogger(true, newSettings.LogFile, newSettings.LogVerbosity);
-            _log.Info(firstRunEver ? "Initializing Propeller" : "Reinitializing Propeller");
+            _log = PropellerUtil.GetLogger(true, newSettings.LogFilePattern, newSettings.LogVerbosity);
+            _log.Info(firstRunEver ? $"Initializing Propeller v{FileVersionInfo.GetVersionInfo(typeof(IPropellerModule).Assembly.Location).FileVersion}" : "Reinitializing Propeller");
 
             PropellerUtil.WarnInvalidCertificates(newSettings, _log);
 
@@ -95,7 +96,7 @@ namespace RT.Propeller
                 _activeModules = newModules;
                 _server.Options = newSettings.ServerOptions;
                 _server.Handler = createResolver().Handle;
-                _server.Log = PropellerUtil.GetLogger(newSettings.HttpAccessLogToConsole, newSettings.HttpAccessLogFile, newSettings.HttpAccessLogVerbosity);
+                _server.Log = PropellerUtil.GetLogger(newSettings.HttpAccessLogToConsole, newSettings.HttpAccessLogFilePattern, newSettings.HttpAccessLogVerbosity);
                 if (startListening)
                     _server.StartListening();
             }

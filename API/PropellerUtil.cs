@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Linq;
 using RT.Json;
@@ -40,7 +40,7 @@ namespace RT.PropellerApi
             if (settings.Modules.Length != 1)
                 throw new InvalidOperationException("Propeller Standalone mode can only accept a settings file that has exactly one module configuration.");
 
-            var log = GetLogger(true, settings.LogFile, settings.LogVerbosity);
+            var log = GetLogger(true, settings.LogFilePattern, settings.LogVerbosity);
             log.Info($"Running Propeller module {module.Name} in standalone mode.");
 
             WarnInvalidCertificates(settings, log);
@@ -133,8 +133,9 @@ namespace RT.PropellerApi
         ///     Returns a logger in accordance with the specified settings.</summary>
         /// <param name="console">
         ///     If <c>true</c>, the resulting logger will log to the console.</param>
-        /// <param name="file">
-        ///     If non-<c>null</c>, the resulting logger will log to the specified file.</param>
+        /// <param name="filePattern">
+        ///     If non-<c>null</c>, the resulting logger will log to the specified file. The current date/time can be
+        ///     interpolated into the filename using <c>{0:...}</c>, where <c>...</c> is a formatting string for DateTime.</param>
         /// <param name="logVerbosity">
         ///     Configures the verbosity of the resulting logger.</param>
         /// <remarks>
@@ -142,9 +143,9 @@ namespace RT.PropellerApi
         ///         Uses <see cref="ConsoleLogger"/> amd <see cref="FileAppendLogger"/> as appropriate.</para>
         ///     <para>
         ///         If both logging mechanisms are specified, uses a <see cref="MulticastLogger"/> to combine the two.</para></remarks>
-        public static LoggerBase GetLogger(bool console, string file, string logVerbosity)
+        public static LoggerBase GetLogger(bool console, string filePattern, string logVerbosity)
         {
-            if (!console && file == null)
+            if (!console && filePattern == null)
                 return new NullLogger();
 
             ConsoleLogger consoleLogger = null;
@@ -152,14 +153,14 @@ namespace RT.PropellerApi
             {
                 consoleLogger = new ConsoleLogger();
                 consoleLogger.ConfigureVerbosity(logVerbosity);
-                if (file == null)
+                if (filePattern == null)
                     return consoleLogger;
             }
 
             FileAppendLogger fileLogger = null;
-            if (file != null)
+            if (filePattern != null)
             {
-                fileLogger = new FileAppendLogger(file) { SharingVioWait = TimeSpan.FromSeconds(2) };
+                fileLogger = new FileAppendLogger(filePattern, interpolateDate: true, sharingVioWait: TimeSpan.FromSeconds(2));
                 fileLogger.ConfigureVerbosity(logVerbosity);
                 if (!console)
                     return fileLogger;

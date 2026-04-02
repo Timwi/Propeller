@@ -7,7 +7,7 @@ namespace RT.Propeller
     {
         private bool _isStandalone = false;
         private volatile bool _terminate = false;
-        private PropellerEngine _engine = new PropellerEngine();
+        private readonly PropellerEngine _engine = new();
 
         public string SettingsPath { get; set; }
 

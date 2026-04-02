@@ -11,13 +11,15 @@ namespace RT.PropellerApi
     public sealed class PropellerSettings
     {
         /// <summary>HttpServer configuration.</summary>
-        public HttpServerOptions ServerOptions = new HttpServerOptions();
+        public HttpServerOptions ServerOptions = new();
 
         /// <summary>Contains the configuration of all the Propeller modules.</summary>
-        public PropellerModuleSettings[] Modules = new PropellerModuleSettings[0];
+        public PropellerModuleSettings[] Modules = [];
 
-        /// <summary>If not <c>null</c>, every HTTP request is logged to this file.</summary>
-        public string HttpAccessLogFile = null;
+        /// <summary>
+        ///     If not <c>null</c>, every HTTP request is logged to this file. The current date/time can be interpolated into
+        ///     the filename using <c>{0:...}</c>, where <c>...</c> is a formatting string for DateTime.</summary>
+        public string HttpAccessLogFilePattern = null;
 
         /// <summary>If <c>true</c>, all HTTP requests are logged to the console.</summary>
         public bool HttpAccessLogToConsole = false;
@@ -26,8 +28,11 @@ namespace RT.PropellerApi
         ///     Specifies log verbosity for the HTTP access log. For usage, see <see cref="LoggerBase.ConfigureVerbosity"/>.</summary>
         public string HttpAccessLogVerbosity = "1d0";
 
-        /// <summary>Specifies the path and filename for the Propeller log, or <c>null</c> to keep no log.</summary>
-        public string LogFile = null;
+        /// <summary>
+        ///     Specifies the path and filename for the Propeller log, or <c>null</c> to keep no log. The current date/time
+        ///     can be interpolated into the filename using <c>{0:...}</c>, where <c>...</c> is a formatting string for
+        ///     DateTime.</summary>
+        public string LogFilePattern = null;
 
         /// <summary>
         ///     Specifies log verbosity for the Propeller log. For usage, see <see cref="LoggerBase.ConfigureVerbosity"/>.</summary>
@@ -61,7 +66,7 @@ namespace RT.PropellerApi
         ///     matching file is added, deleted or modified, the module is reinitialized. The folder that contains <see
         ///     cref="ModuleDll"/> is already automatically monitored and does not need to be listed here.</summary>
         [ClassifyNotNull, ClassifyIgnoreIfDefault, ClassifyIgnoreIfEmpty]
-        public string[] MonitorFilters = { };
+        public string[] MonitorFilters = [];
 
         /// <summary>
         ///     The CLR type name of the Propeller module. This may be <c>null</c> if the DLL file contains only a single type
@@ -71,7 +76,7 @@ namespace RT.PropellerApi
 
         /// <summary>The URL hooks to hook this module to.</summary>
         [ClassifyNotNull]
-        public UrlHook[] Hooks = new UrlHook[] { new UrlHook() };
+        public UrlHook[] Hooks = [new UrlHook()];
 
         /// <summary>Settings for this module. (Stored as JSON and passed to the module to be deserialized there.)</summary>
         public JsonValue Settings = null;
