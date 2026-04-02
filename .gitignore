@@ -7,3 +7,4 @@ publish
 *.sln.cache
 *.orig
 Src/Properties/launchSettings.json
+Dependent Projects
